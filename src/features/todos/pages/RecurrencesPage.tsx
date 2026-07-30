@@ -72,7 +72,7 @@ export function RecurrencesPage() {
           }
         />
       ) : (
-        <div className="space-y-2">
+        <div>
           {activeTodos.map((todo) => (
             <TodoManageCard
               key={todo.id}

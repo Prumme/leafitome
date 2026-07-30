@@ -7,14 +7,12 @@ interface CompletionOverviewProps {
 }
 
 export function CompletionOverview({ stats }: CompletionOverviewProps) {
-  const evaluated = stats.done + stats.missed
-
   return (
     <Card className="space-y-5">
       <div>
         <h2 className="text-lg font-semibold text-forest-950">Taux de complétion</h2>
         <p className="text-sm text-ink-muted">
-          Basé sur les tâches évaluées (faites ou manquées) sur la période.
+          Part des tâches faites sur toutes celles de la période (en attente incluses).
         </p>
       </div>
 
@@ -28,7 +26,7 @@ export function CompletionOverview({ stats }: CompletionOverviewProps) {
         <MiniStat label="Total" value={stats.total} />
         <MiniStat label="Faites" value={stats.done} className="text-done-700" />
         <MiniStat label="Manquées" value={stats.missed} className="text-missed-700" />
-        <MiniStat label="Évaluées" value={evaluated} />
+        <MiniStat label="En attente" value={stats.pending + stats.upcoming} />
       </div>
     </Card>
   )

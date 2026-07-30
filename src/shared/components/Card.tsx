@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
 import { cn } from '@/shared/utils/cn'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -13,9 +13,13 @@ const paddingClasses = {
   lg: 'p-5 sm:p-6',
 } as const
 
-export function Card({ children, className, padding = 'md', ...props }: CardProps) {
+export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
+  { children, className, padding = 'md', ...props },
+  ref,
+) {
   return (
     <div
+      ref={ref}
       className={cn(
         'rounded-2xl border border-forest-200/80 bg-surface-elevated shadow-soft',
         paddingClasses[padding],
@@ -26,4 +30,4 @@ export function Card({ children, className, padding = 'md', ...props }: CardProp
       {children}
     </div>
   )
-}
+})

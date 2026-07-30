@@ -1,9 +1,5 @@
 import { create } from 'zustand'
-import type {
-  CreateHistoryInput,
-  HistoryEntry,
-  HistoryStatus,
-} from '@/features/history/types/history.types'
+import type { HistoryEntry, HistoryStatus } from '@/features/history/types/history.types'
 import { historyRepository } from '@/features/history/store/historyRepository'
 
 interface HistoryState {
@@ -31,22 +27,55 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     )
 
     if (existing) {
-      const updated = await historyRepository.update(existing.id, { status })
+      const optimistic = { ...existing, status }
       set({
-        entries: get().entries.map((entry) => (entry.id === existing.id ? updated : entry)),
+        entries: get().entries.map((entry) => (entry.id === existing.id ? optimistic : entry)),
       })
-      return updated
+      try {
+        const updated = await historyRepository.update(existing.id, { status })
+        set({
+          entries: get().entries.map((entry) => (entry.id === existing.id ? updated : entry)),
+        })
+        return updated
+      } catch (error) {
+        set({
+          entries: get().entries.map((entry) => (entry.id === existing.id ? existing : entry)),
+        })
+        throw error
+      }
     }
 
-    const input: CreateHistoryInput = { todoId, date, status }
-    const created = await historyRepository.create(input)
-    set({ entries: [...get().entries, created] })
-    return created
+    const tempId = `optimistic-${todoId}-${date}`
+    const optimistic: HistoryEntry = {
+      id: tempId,
+      todoId,
+      date,
+      status,
+      createdAt: new Date().toISOString(),
+    }
+    set({ entries: [...get().entries, optimistic] })
+
+    try {
+      const created = await historyRepository.create({ todoId, date, status })
+      set({
+        entries: get().entries.map((entry) => (entry.id === tempId ? created : entry)),
+      })
+      return created
+    } catch (error) {
+      set({ entries: get().entries.filter((entry) => entry.id !== tempId) })
+      throw error
+    }
   },
 
   removeEntry: async (id) => {
-    await historyRepository.delete(id)
-    set({ entries: get().entries.filter((entry) => entry.id !== id) })
+    const previous = get().entries
+    set({ entries: previous.filter((entry) => entry.id !== id) })
+    try {
+      await historyRepository.delete(id)
+    } catch (error) {
+      set({ entries: previous })
+      throw error
+    }
   },
 
   clearForTodo: async (todoId) => {

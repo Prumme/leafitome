@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { CheckCircle2, CircleDashed, Leaf, AlertTriangle } from 'lucide-react'
 import { CompletionOverview } from '@/features/dashboard/components/CompletionOverview'
 import { StatsCard } from '@/features/dashboard/components/StatsCard'
 import { useDashboardStats } from '@/features/dashboard/hooks/useDashboardStats'
 import { OccurrenceCard } from '@/features/todos/components/OccurrenceCard'
+import { occurrenceKey, usePinnedOccurrences } from '@/features/todos/hooks/usePinnedOccurrences'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Tabs } from '@/shared/components/Tabs'
+import { usePeriodStore } from '@/shared/store/periodStore'
 import type { PeriodFilter } from '@/shared/types/common.types'
 import { formatDisplayDate } from '@/shared/utils/dates'
 
@@ -17,8 +19,10 @@ const periodOptions: Array<{ value: PeriodFilter; label: string }> = [
 ]
 
 export function DashboardPage() {
-  const [period, setPeriod] = useState<PeriodFilter>('week')
+  const period = usePeriodStore((state) => state.period)
+  const setPeriod = usePeriodStore((state) => state.setPeriod)
   const { stats, remaining, loaded } = useDashboardStats(period)
+  const { displayed, pin, unpin } = usePinnedOccurrences(remaining)
 
   const subtitle = useMemo(() => formatDisplayDate(new Date()), [])
 
@@ -69,17 +73,20 @@ export function DashboardPage() {
 
         <div className="space-y-3 lg:col-span-2">
           <h2 className="text-lg font-semibold text-forest-950">Reste à faire aujourd'hui</h2>
-          {remaining.length === 0 ? (
+          {displayed.length === 0 ? (
             <EmptyState
               title="Tout est clair"
               description="Aucune tâche restante pour aujourd'hui. Belle forêt intérieure."
             />
           ) : (
             <div className="space-y-2">
-              {remaining.map((occurrence) => (
+              {displayed.map((occurrence) => (
                 <OccurrenceCard
-                  key={`${occurrence.todo.id}-${occurrence.date}`}
+                  key={occurrenceKey(occurrence)}
                   occurrence={occurrence}
+                  disappearWhenDone
+                  onWillLeave={pin}
+                  onDidLeave={unpin}
                 />
               ))}
             </div>

@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Plus } from 'lucide-react'
 import { OccurrenceCard } from '@/features/todos/components/OccurrenceCard'
 import { TodoForm } from '@/features/todos/components/TodoForm'
+import { usePinnedOccurrences, occurrenceKey } from '@/features/todos/hooks/usePinnedOccurrences'
 import { useScheduledOccurrences } from '@/features/todos/hooks/useScheduledOccurrences'
 import { useTodoStore } from '@/features/todos/store/todoStore'
 import type { CreateTodoInput } from '@/features/todos/types/todo.types'
@@ -11,6 +12,7 @@ import { Modal } from '@/shared/components/Modal'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { Tabs } from '@/shared/components/Tabs'
 import { useDisclosure } from '@/shared/hooks/useDisclosure'
+import { usePeriodStore } from '@/shared/store/periodStore'
 import type { PeriodFilter } from '@/shared/types/common.types'
 import { formatDisplayDate, formatShortDate } from '@/shared/utils/dates'
 
@@ -21,20 +23,22 @@ const periodOptions: Array<{ value: PeriodFilter; label: string }> = [
 ]
 
 export function TodayPage() {
-  const [period, setPeriod] = useState<PeriodFilter>('today')
+  const period = usePeriodStore((state) => state.period)
+  const setPeriod = usePeriodStore((state) => state.setPeriod)
   const { occurrences, loaded } = useScheduledOccurrences(period)
+  const { displayed, pin, unpin } = usePinnedOccurrences(occurrences)
   const createTodo = useTodoStore((state) => state.createTodo)
   const modal = useDisclosure()
 
   const grouped = useMemo(() => {
-    const map = new Map<string, typeof occurrences>()
-    for (const occurrence of occurrences) {
+    const map = new Map<string, typeof displayed>()
+    for (const occurrence of displayed) {
       const list = map.get(occurrence.date) ?? []
       list.push(occurrence)
       map.set(occurrence.date, list)
     }
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b))
-  }, [occurrences])
+  }, [displayed])
 
   const pendingCount = occurrences.filter(
     (item) => item.status === 'PENDING' || item.status === 'MISSED',
@@ -65,7 +69,7 @@ export function TodayPage() {
         }
       />
 
-      {occurrences.length === 0 ? (
+      {displayed.length === 0 ? (
         <EmptyState
           title="Aucune tâche sur cette période"
           description="Crée une récurrence ou change de période pour voir tes prochaines feuilles pousser."
@@ -88,8 +92,10 @@ export function TodayPage() {
               <div className="space-y-2">
                 {items.map((occurrence) => (
                   <OccurrenceCard
-                    key={`${occurrence.todo.id}-${occurrence.date}`}
+                    key={occurrenceKey(occurrence)}
                     occurrence={occurrence}
+                    onWillLeave={pin}
+                    onDidLeave={unpin}
                   />
                 ))}
               </div>

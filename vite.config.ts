@@ -6,7 +6,7 @@ import path from 'node:path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/todo-prumme/',
+  base: '/leafitome/',
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),

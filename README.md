@@ -20,7 +20,7 @@ npm run dev
 
 ## Build & déploiement GitHub Pages
 
-Le `base` Vite est configuré sur `/todo-prumme/` (nom du dépôt).
+Le `base` Vite est configuré sur `/leafitome/` (nom du dépôt).
 
 ```bash
 npm run deploy
@@ -28,9 +28,9 @@ npm run deploy
 
 Cela build le projet, copie `index.html` → `404.html` (SPA), et publie le dossier `dist` via `gh-pages`.
 
-Ensuite, dans les settings GitHub du dépôt : **Pages** → source **gh-pages** branch.
+Ensuite, dans les settings GitHub du dépôt : **Pages** → source **Deploy from a branch** → branche **`gh-pages`** / dossier **`/` (root)**.
 
-L'URL sera : `https://<user>.github.io/todo-prumme/`
+L'URL sera : `https://prumme.github.io/leafitome/`
 
 Si le dépôt a un autre nom, mets à jour `base` dans `vite.config.ts` et `homepage` dans `package.json`.
 

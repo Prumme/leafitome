@@ -120,8 +120,8 @@ export function computeCompletionStats(occurrences: TodoOccurrence[]): Completio
   const missed = occurrences.filter((item) => item.status === 'MISSED').length
   const pending = occurrences.filter((item) => item.status === 'PENDING').length
   const upcoming = occurrences.filter((item) => item.status === 'UPCOMING').length
-  const evaluated = done + missed
-  const completionRate = evaluated === 0 ? 0 : Math.round((done / evaluated) * 100)
+  // Faites / toutes les occurrences de la période (pending & upcoming baissent le taux)
+  const completionRate = total === 0 ? 0 : Math.round((done / total) * 100)
 
   return { total, done, missed, pending, upcoming, completionRate }
 }
@@ -132,5 +132,15 @@ export function getRemainingForToday(
 ): TodoOccurrence[] {
   return getOccurrencesForDayIncludingEarly(todos, entries, new Date()).filter(
     (item) => item.status === 'PENDING' || item.status === 'UPCOMING',
+  )
+}
+
+/** Tâches du jour encore à traiter (pending, missed, upcoming) — pour célébration à 0. */
+export function getActionableForToday(
+  todos: Todo[],
+  entries: HistoryEntry[],
+): TodoOccurrence[] {
+  return getOccurrencesForDayIncludingEarly(todos, entries, new Date()).filter(
+    (item) => item.status !== 'DONE',
   )
 }
