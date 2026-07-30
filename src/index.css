@@ -1,0 +1,104 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Forest palette */
+  --color-forest-50: #f3f7f4;
+  --color-forest-100: #e2eee5;
+  --color-forest-200: #c5dccb;
+  --color-forest-300: #9bc3a8;
+  --color-forest-400: #6ea57f;
+  --color-forest-500: #4d8861;
+  --color-forest-600: #3a6d4c;
+  --color-forest-700: #2f573e;
+  --color-forest-800: #274634;
+  --color-forest-900: #213a2c;
+  --color-forest-950: #111f17;
+
+  /* Moss accents */
+  --color-moss-50: #f5faf3;
+  --color-moss-100: #e8f5e3;
+  --color-moss-200: #d1eac7;
+  --color-moss-300: #abd895;
+  --color-moss-400: #84c065;
+  --color-moss-500: #63a644;
+  --color-moss-600: #4d8533;
+  --color-moss-700: #3e682b;
+  --color-moss-800: #345427;
+  --color-moss-900: #2c4522;
+  --color-moss-950: #14250e;
+
+  /* Bark / earth neutrals */
+  --color-bark-50: #f7f5f2;
+  --color-bark-100: #ece7e0;
+  --color-bark-200: #d9cfc2;
+  --color-bark-300: #c2b19e;
+  --color-bark-400: #ab927c;
+  --color-bark-500: #9a7d66;
+  --color-bark-600: #8d6d5a;
+  --color-bark-700: #75594b;
+  --color-bark-800: #614a41;
+  --color-bark-900: #503e37;
+  --color-bark-950: #2b201c;
+
+  /* Status: done (green) */
+  --color-done-50: #ecfdf3;
+  --color-done-100: #d1fae0;
+  --color-done-200: #a7f3c6;
+  --color-done-300: #6ee7a4;
+  --color-done-400: #34d37f;
+  --color-done-500: #12b76a;
+  --color-done-600: #079455;
+  --color-done-700: #067647;
+  --color-done-800: #085d3a;
+  --color-done-900: #074d31;
+
+  /* Status: missed / late (orange) */
+  --color-missed-50: #fff6ed;
+  --color-missed-100: #ffead5;
+  --color-missed-200: #fddcab;
+  --color-missed-300: #fbc174;
+  --color-missed-400: #f89a3c;
+  --color-missed-500: #f67a16;
+  --color-missed-600: #e75d0c;
+  --color-missed-700: #bf440c;
+  --color-missed-800: #983612;
+  --color-missed-900: #7a2e12;
+
+  /* Semantic aliases */
+  --color-surface: var(--color-forest-50);
+  --color-surface-elevated: #ffffff;
+  --color-ink: var(--color-forest-950);
+  --color-ink-muted: var(--color-forest-700);
+  --color-border: var(--color-forest-200);
+  --color-primary: var(--color-forest-600);
+  --color-primary-hover: var(--color-forest-700);
+  --color-accent: var(--color-moss-500);
+
+  --font-sans: 'Segoe UI', 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Segoe UI', 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-soft: 0 1px 2px rgb(17 31 23 / 0.06), 0 8px 24px rgb(17 31 23 / 0.06);
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply m-0 min-h-dvh bg-surface font-sans text-ink antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 0% -10%, rgb(109 165 127 / 0.18), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(132 192 101 / 0.12), transparent),
+      linear-gradient(180deg, var(--color-forest-50), var(--color-bark-50));
+    background-attachment: fixed;
+  }
+
+  #root {
+    @apply min-h-dvh;
+  }
+
+  * {
+    @apply border-border;
+  }
+}
