@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Download, Plus, Upload } from 'lucide-react'
+import { useBadgeStore } from '@/features/badges/store/badgeStore'
 import { ImportBackupDialog } from '@/features/todos/components/ImportBackupDialog'
 import { TodoForm } from '@/features/todos/components/TodoForm'
 import { TodoManageCard } from '@/features/todos/components/TodoManageCard'
@@ -22,6 +23,8 @@ export function RecurrencesPage() {
   const archiveTodo = useTodoStore((state) => state.archiveTodo)
   const toggleEnabled = useTodoStore((state) => state.toggleEnabled)
   const history = useHistoryStore((state) => state.entries)
+  const badges = useBadgeStore((state) => state.progress)
+  const markTraveled = useBadgeStore((state) => state.markTraveled)
 
   const createModal = useDisclosure()
   const editModal = useDisclosure()
@@ -49,8 +52,10 @@ export function RecurrencesPage() {
     closeEdit()
   }
 
-  function handleExport() {
-    downloadBackup(buildBackup(todos, history))
+  async function handleExport() {
+    const next = { ...badges, hasTraveled: true }
+    downloadBackup(buildBackup(todos, history, next))
+    await markTraveled()
   }
 
   if (!loaded) {
@@ -67,7 +72,7 @@ export function RecurrencesPage() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={handleExport}
+              onClick={() => void handleExport()}
               aria-label="Exporter les données"
               title="Exporter les données"
             >

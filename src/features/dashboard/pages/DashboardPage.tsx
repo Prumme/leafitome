@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { CheckCircle2, CircleDashed, Leaf, AlertTriangle } from 'lucide-react'
 import { ActivityHeatmap } from '@/features/dashboard/components/ActivityHeatmap'
+import { BadgesCard } from '@/features/dashboard/components/BadgesCard'
 import { CompletionOverview } from '@/features/dashboard/components/CompletionOverview'
 import { StatsCard } from '@/features/dashboard/components/StatsCard'
 import { StreakCard } from '@/features/dashboard/components/StreakCard'
@@ -71,9 +72,8 @@ export function DashboardPage() {
       </div>
 
       <div className="mb-6 grid gap-3 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <ActivityHeatmap cells={heatmap} />
-        </div>
+        <ActivityHeatmap cells={heatmap} />
+        <BadgesCard />
         <StreakCard streak={streak} />
       </div>
 

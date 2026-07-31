@@ -577,12 +577,28 @@
     color: var(--color-moss-500);
   }
 
+  @keyframes badge-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .animate-badge-toast-in {
+    animation: badge-toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-card-validate,
     .animate-fade-exit,
     .animate-checkbox-uncheck,
     .animate-leaf-flash,
     .animate-card-crumple-away,
+    .animate-badge-toast-in,
     .lake-ripple,
     .todo-title-strike.is-erasing::after,
     .page-transition-veil,

@@ -1,5 +1,6 @@
 import { useRef, useState, type DragEvent, type ChangeEvent } from 'react'
 import { FileJson, Leaf, Upload } from 'lucide-react'
+import { useBadgeStore } from '@/features/badges/store/badgeStore'
 import { useHistoryStore } from '@/features/history/store/historyStore'
 import { useTodoStore } from '@/features/todos/store/todoStore'
 import { Button } from '@/shared/components/Button'
@@ -15,6 +16,8 @@ interface ImportBackupDialogProps {
 export function ImportBackupDialog({ open, onClose }: ImportBackupDialogProps) {
   const replaceTodos = useTodoStore((state) => state.replaceAll)
   const replaceHistory = useHistoryStore((state) => state.replaceAll)
+  const replaceBadges = useBadgeStore((state) => state.replaceAll)
+  const markTraveled = useBadgeStore((state) => state.markTraveled)
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const [preview, setPreview] = useState<LeafitomeBackup | null>(null)
@@ -76,7 +79,15 @@ export function ImportBackupDialog({ open, onClose }: ImportBackupDialogProps) {
     setBusy(true)
     setError(null)
     try {
-      await Promise.all([replaceTodos(preview.todos), replaceHistory(preview.history)])
+      await Promise.all([
+        replaceTodos(preview.todos),
+        replaceHistory(preview.history),
+        replaceBadges({
+          ...preview.badges,
+          hasTraveled: true,
+        }),
+      ])
+      await markTraveled()
       resetState()
       onClose()
     } catch (err) {

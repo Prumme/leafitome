@@ -3,6 +3,8 @@ import { Footer } from '@/app/layout/Footer'
 import { Navbar } from '@/app/layout/Navbar'
 import { PageTransitionProvider } from '@/app/transitions/PageTransitionContext'
 import { PageTransitionOverlay } from '@/app/transitions/PageTransitionOverlay'
+import { BadgeToast } from '@/features/badges/components/BadgeToast'
+import { useBadgeUnlockWatcher } from '@/features/badges/hooks/useBadgeUnlockWatcher'
 import { DayCompleteOverlay } from '@/features/celebration/DayCompleteOverlay'
 import { useDayCompleteCelebration } from '@/features/celebration/useDayCompleteCelebration'
 import { useBootstrapData } from '@/shared/hooks/useBootstrapData'
@@ -11,6 +13,7 @@ import { Leaf } from 'lucide-react'
 export function AppLayout() {
   const { ready } = useBootstrapData()
   const celebrating = useDayCompleteCelebration(ready)
+  useBadgeUnlockWatcher(ready)
 
   return (
     <PageTransitionProvider>
@@ -30,6 +33,7 @@ export function AppLayout() {
           <Footer />
           <PageTransitionOverlay />
           <DayCompleteOverlay active={celebrating} />
+          <BadgeToast />
         </div>
       </div>
     </PageTransitionProvider>

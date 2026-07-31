@@ -1,0 +1,168 @@
+import {
+  Award,
+  CalendarDays,
+  CalendarRange,
+  Flame,
+  Footprints,
+  Leaf,
+  Luggage,
+  Sparkles,
+  Sprout,
+  Target,
+  TreeDeciduous,
+  TreePine,
+  Trees,
+  Trophy,
+} from 'lucide-react'
+import type { BadgeDefinition, BadgeId } from '@/features/badges/types/badge.types'
+
+export const BADGE_CATALOG: BadgeDefinition[] = [
+  {
+    id: 'streak-7',
+    name: '1 semaine',
+    description: 'Série de 7 jours',
+    icon: Flame,
+    tone: 'missed',
+  },
+  {
+    id: 'streak-14',
+    name: '2 semaines',
+    description: 'Série de 14 jours',
+    icon: Flame,
+    tone: 'missed',
+  },
+  {
+    id: 'streak-30',
+    name: '1 mois',
+    description: 'Série de 30 jours',
+    icon: Trophy,
+    tone: 'done',
+  },
+  {
+    id: 'streak-60',
+    name: '2 mois',
+    description: 'Série de 60 jours',
+    icon: Trophy,
+    tone: 'done',
+  },
+  {
+    id: 'streak-180',
+    name: '6 mois',
+    description: 'Série de 180 jours',
+    icon: Award,
+    tone: 'forest',
+  },
+  {
+    id: 'streak-365',
+    name: '1 an',
+    description: 'Série de 365 jours',
+    icon: Award,
+    tone: 'forest',
+  },
+  {
+    id: 'todos-created-1',
+    name: 'Première graine',
+    description: 'Créer 1 todo',
+    icon: Sprout,
+    tone: 'moss',
+  },
+  {
+    id: 'todos-created-10',
+    name: 'Petit bosquet',
+    description: 'Créer 10 todos',
+    icon: Trees,
+    tone: 'moss',
+  },
+  {
+    id: 'todos-created-50',
+    name: 'Forêt plantée',
+    description: 'Créer 50 todos',
+    icon: TreePine,
+    tone: 'forest',
+  },
+  {
+    id: 'todos-done-1',
+    name: 'Première feuille',
+    description: 'Cocher 1 todo',
+    icon: Leaf,
+    tone: 'done',
+  },
+  {
+    id: 'todos-done-10',
+    name: 'Cueillette',
+    description: 'Cocher 10 todos',
+    icon: Leaf,
+    tone: 'done',
+  },
+  {
+    id: 'todos-done-50',
+    name: 'Récolte',
+    description: 'Cocher 50 todos',
+    icon: Target,
+    tone: 'done',
+  },
+  {
+    id: 'todos-done-100',
+    name: 'Cent feuilles',
+    description: 'Cocher 100 todos',
+    icon: TreeDeciduous,
+    tone: 'forest',
+  },
+  {
+    id: 'perfect-day-1',
+    name: 'Clairière nette',
+    description: '1 journée parfaite',
+    icon: Sparkles,
+    tone: 'moss',
+  },
+  {
+    id: 'perfect-day-5',
+    name: 'Feuille-tastique ×5',
+    description: '5 journées parfaites',
+    icon: Sparkles,
+    tone: 'moss',
+  },
+  {
+    id: 'perfect-day-20',
+    name: 'Feuille-tastique ×20',
+    description: '20 journées parfaites',
+    icon: TreeDeciduous,
+    tone: 'forest',
+  },
+  {
+    id: 'streak-comeback',
+    name: 'Retour en forêt',
+    description: 'Reprendre après une série cassée',
+    icon: Footprints,
+    tone: 'bark',
+  },
+  {
+    id: 'recurrence-weekly',
+    name: 'Rythme hebdo',
+    description: 'Créer une todo hebdomadaire',
+    icon: CalendarDays,
+    tone: 'forest',
+  },
+  {
+    id: 'recurrence-monthly',
+    name: 'Rythme mensuel',
+    description: 'Créer une todo mensuelle',
+    icon: CalendarRange,
+    tone: 'forest',
+  },
+  {
+    id: 'backup-traveler',
+    name: 'Voyageur',
+    description: 'Exporter ou importer une sauvegarde',
+    icon: Luggage,
+    tone: 'bark',
+  },
+]
+
+export const BADGE_BY_ID: Record<BadgeId, BadgeDefinition> = BADGE_CATALOG.reduce(
+  (acc, badge) => {
+    acc[badge.id] = badge
+    return acc
+  },
+  {} as Record<BadgeId, BadgeDefinition>,
+)
