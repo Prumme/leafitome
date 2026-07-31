@@ -10,6 +10,7 @@ interface HistoryState {
   removeEntry: (id: string) => Promise<void>
   clearForTodo: (todoId: string) => Promise<void>
   getEntry: (todoId: string, date: string) => HistoryEntry | undefined
+  replaceAll: (entries: HistoryEntry[]) => Promise<void>
 }
 
 export const useHistoryStore = create<HistoryState>((set, get) => ({
@@ -86,4 +87,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   getEntry: (todoId, date) =>
     get().entries.find((entry) => entry.todoId === todoId && entry.date === date),
+
+  replaceAll: async (entries) => {
+    await historyRepository.replaceAll(entries)
+    set({ entries, loaded: true })
+  },
 }))

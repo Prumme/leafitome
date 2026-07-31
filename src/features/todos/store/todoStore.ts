@@ -11,6 +11,7 @@ interface TodoState {
   deleteTodo: (id: string) => Promise<void>
   archiveTodo: (id: string) => Promise<Todo>
   toggleEnabled: (id: string) => Promise<Todo>
+  replaceAll: (todos: Todo[]) => Promise<void>
 }
 
 export const useTodoStore = create<TodoState>((set, get) => ({
@@ -49,5 +50,10 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     const current = get().todos.find((todo) => todo.id === id)
     if (!current) throw new Error(`Todo introuvable: ${id}`)
     return get().updateTodo(id, { enabled: !current.enabled })
+  },
+
+  replaceAll: async (todos) => {
+    await todoRepository.replaceAll(todos)
+    set({ todos, loaded: true })
   },
 }))

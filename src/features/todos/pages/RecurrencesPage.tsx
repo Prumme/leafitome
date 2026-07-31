@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Download, Plus, Upload } from 'lucide-react'
+import { ImportBackupDialog } from '@/features/todos/components/ImportBackupDialog'
 import { TodoForm } from '@/features/todos/components/TodoForm'
 import { TodoManageCard } from '@/features/todos/components/TodoManageCard'
 import { useTodos } from '@/features/todos/hooks/useTodos'
+import { useHistoryStore } from '@/features/history/store/historyStore'
 import { useTodoStore } from '@/features/todos/store/todoStore'
 import type { CreateTodoInput, Todo, UpdateTodoInput } from '@/features/todos/types/todo.types'
 import { Button } from '@/shared/components/Button'
@@ -10,16 +12,20 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { Modal } from '@/shared/components/Modal'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { useDisclosure } from '@/shared/hooks/useDisclosure'
+import { buildBackup, downloadBackup } from '@/shared/lib/backup/backup'
 
 export function RecurrencesPage() {
   const { activeTodos, loaded } = useTodos()
+  const todos = useTodoStore((state) => state.todos)
   const createTodo = useTodoStore((state) => state.createTodo)
   const updateTodo = useTodoStore((state) => state.updateTodo)
   const archiveTodo = useTodoStore((state) => state.archiveTodo)
   const toggleEnabled = useTodoStore((state) => state.toggleEnabled)
+  const history = useHistoryStore((state) => state.entries)
 
   const createModal = useDisclosure()
   const editModal = useDisclosure()
+  const importModal = useDisclosure()
   const [editing, setEditing] = useState<Todo | null>(null)
 
   function openEdit(todo: Todo) {
@@ -43,6 +49,10 @@ export function RecurrencesPage() {
     closeEdit()
   }
 
+  function handleExport() {
+    downloadBackup(buildBackup(todos, history))
+  }
+
   if (!loaded) {
     return <p className="text-ink-muted">Chargement des récurrences…</p>
   }
@@ -53,10 +63,30 @@ export function RecurrencesPage() {
         title="Récurrences"
         subtitle="Gère tes todos et leur rythme de répétition."
         actions={
-          <Button onClick={createModal.open}>
-            <Plus className="h-4 w-4" />
-            Nouvelle récurrence
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExport}
+              aria-label="Exporter les données"
+              title="Exporter les données"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={importModal.open}
+              aria-label="Importer des données"
+              title="Importer des données"
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
+            <Button onClick={createModal.open}>
+              <Plus className="h-4 w-4" />
+              Nouvelle récurrence
+            </Button>
+          </>
         }
       />
 
@@ -100,6 +130,8 @@ export function RecurrencesPage() {
           />
         ) : null}
       </Modal>
+
+      <ImportBackupDialog open={importModal.isOpen} onClose={importModal.close} />
     </div>
   )
 }

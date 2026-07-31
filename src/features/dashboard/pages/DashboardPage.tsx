@@ -1,7 +1,10 @@
 import { useMemo } from 'react'
 import { CheckCircle2, CircleDashed, Leaf, AlertTriangle } from 'lucide-react'
+import { ActivityHeatmap } from '@/features/dashboard/components/ActivityHeatmap'
 import { CompletionOverview } from '@/features/dashboard/components/CompletionOverview'
 import { StatsCard } from '@/features/dashboard/components/StatsCard'
+import { StreakCard } from '@/features/dashboard/components/StreakCard'
+import { useActivityInsights } from '@/features/dashboard/hooks/useActivityInsights'
 import { useDashboardStats } from '@/features/dashboard/hooks/useDashboardStats'
 import { OccurrenceCard } from '@/features/todos/components/OccurrenceCard'
 import { occurrenceKey, usePinnedOccurrences } from '@/features/todos/hooks/usePinnedOccurrences'
@@ -22,6 +25,7 @@ export function DashboardPage() {
   const period = usePeriodStore((state) => state.period)
   const setPeriod = usePeriodStore((state) => state.setPeriod)
   const { stats, remaining, loaded } = useDashboardStats(period)
+  const { heatmap, streak } = useActivityInsights()
   const { displayed, pin, unpin } = usePinnedOccurrences(remaining)
 
   const subtitle = useMemo(() => formatDisplayDate(new Date()), [])
@@ -64,6 +68,13 @@ export function DashboardPage() {
           tone="pending"
           icon={<CircleDashed className="h-5 w-5" />}
         />
+      </div>
+
+      <div className="mb-6 grid gap-3 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <ActivityHeatmap cells={heatmap} />
+        </div>
+        <StreakCard streak={streak} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
