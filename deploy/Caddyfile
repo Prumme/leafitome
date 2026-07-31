@@ -1,0 +1,14 @@
+leafitome.prumme.dev {
+	encode gzip
+
+	# Front : fetch('/api/...') — on retire le préfixe /api avant l’API
+	handle_path /api/* {
+		reverse_proxy api:3001
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

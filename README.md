@@ -1,89 +1,68 @@
 # Leafitome
 
-Todo list avec suivi d’historique, thème forêt. Données stockées dans le navigateur (LocalStorage). Installable en **PWA** sur mobile et desktop.
+Todo list avec suivi d’historique, thème forêt. Données synchronisées via API + PostgreSQL. Installable en **PWA**.
 
-## Stack
+## Stack (V2)
 
-- React + TypeScript + Vite
-- React Router
-- Zustand
-- Tailwind CSS (thème forêt centralisé)
-- date-fns
-- vite-plugin-pwa (service worker + manifeste)
-- Architecture feature-based, prête pour une future API
+- **Front** (`apps/web`) — React + TypeScript + Vite + Zustand + Tailwind
+- **API** (`apps/api`) — Hono + PostgreSQL
+- **Auth** — email + mot de passe (JWT + cookie)
+- **Prod** — Docker Compose + Caddy (HTTPS) sur Scaleway → https://leafitome.prumme.dev
 
-## Démarrage
+## Démarrage local
+
+### 1. Base de données
+
+```bash
+docker compose up -d
+```
+
+Postgres écoute sur le port **5433** (évite les conflits avec un Postgres local sur 5432).
+
+### 2. Dépendances
 
 ```bash
 npm install
-npm run dev
 ```
 
-## Build & déploiement GitHub Pages
-
-Le `base` Vite est configuré sur `/leafitome/` (nom du dépôt).
+### 3. Lancer API + front
 
 ```bash
-npm run deploy
+npm run dev:api
+npm run dev:web
 ```
 
-Cela build le projet, copie `index.html` → `404.html` (SPA), et publie le dossier `dist` via `gh-pages`.
+- Front : [http://localhost:5173](http://localhost:5173)
+- API : [http://localhost:3001](http://localhost:3001) (proxy Vite `/api` → API)
 
-Ensuite, dans les settings GitHub du dépôt : **Pages** → source **Deploy from a branch** → branche **`gh-pages`** / dossier **`/` (root)**.
+Variables API : `apps/api/.env` (voir `.env.example`).
 
-L’URL sera : [https://prumme.github.io/leafitome/](https://prumme.github.io/leafitome/)
+### Parcours
 
-Si le dépôt a un autre nom, mets à jour `base` dans `vite.config.ts`, `homepage` dans `package.json`, et `start_url` / `scope` du manifeste PWA.
+1. Landing `/`
+2. Inscription `/register` ou connexion `/login`
+3. App protégée sous `/app`, `/app/dashboard`, `/app/recurrences`
 
-## Installer l’app sur mobile (PWA)
+## Production (VPS)
 
-Après un déploiement à jour (`npm run deploy`), ouvre le site en **HTTPS** (GitHub Pages le fournit déjà).
+Voir le guide détaillé : **[consignes.md](./consignes.md)**
 
-### iPhone / iPad (Safari)
-
-1. Ouvre [https://prumme.github.io/leafitome/](https://prumme.github.io/leafitome/) dans **Safari** (pas Chrome).
-2. Tape le bouton **Partager** (carré avec flèche).
-3. Choisis **Sur l’écran d’accueil**.
-4. Confirme **Ajouter**.
-5. L’icône Leafitome apparaît comme une app : elle s’ouvre en plein écran (standalone).
-
-### Android (Chrome)
-
-1. Ouvre [https://prumme.github.io/leafitome/](https://prumme.github.io/leafitome/) dans **Chrome**.
-2. Menu **⋮** → **Installer l’application** / **Ajouter à l’écran d’accueil**.
-   - Ou la bannière « Installer » si elle s’affiche.
-3. Confirme. L’app est disponible depuis le tiroir / l’écran d’accueil.
-
-### Desktop (Chrome / Edge)
-
-1. Ouvre le site.
-2. Icône **installer** dans la barre d’adresse (ou menu → Installer Leafitome).
-
-> Les données restent **locales au navigateur / appareil**. Pour changer de téléphone, utilise **Exporter / Importer** sur la page Récurrences.
-
-Voir aussi [consignes.md](./consignes.md) pour la checklist côté propriétaire du dépôt.
-
-## Icônes PWA
-
-Si tu modifies `public/favicon.svg` :
+En résumé sur le serveur :
 
 ```bash
-npm run icons
+cp .env.production.example .env.production
+# éditer les secrets
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
 
-Cela régénère `pwa-192x192.png`, `pwa-512x512.png`, `pwa-512x512-maskable.png` et `apple-touch-icon.png`.
+## Structure
 
-## Pages
-
-| Route | Description |
-|-------|-------------|
-| `/` | Tâches du jour / semaine / mois |
-| `/dashboard` | Récap, heatmap, streak, reste à faire |
-| `/recurrences` | Gestion des todos + export / import JSON |
-
-## Entités
-
-- **Todo** — définition + récurrence (`DAILY` \| `WEEKLY` \| `MONTHLY` \| `ONDAY`)
-- **History** — occurrence par date (`DONE` \| `MISSED`)
-
-Les tâches passées sans entrée d’historique sont considérées comme `MISSED` à l’affichage.
+```text
+apps/
+  web/     # React (Vite)
+  api/     # Hono
+deploy/
+  Caddyfile
+docker-compose.yml       # Postgres local
+docker-compose.prod.yml  # Postgres + API + Caddy
+```

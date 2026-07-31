@@ -1,72 +1,207 @@
-# Consignes — PWA Leafitome
+# Consignes — déploiement Leafitome (Scaleway)
 
-Checklist de ce que **tu** dois faire de ton côté pour que l’installation mobile fonctionne.
+Ce que **toi** dois faire sur le VPS et côté DNS.  
+Les fichiers Docker / Caddy sont déjà dans le repo.
 
-## 1. Déployer la version PWA
+**Cible :** https://leafitome.prumme.dev  
+**IP VPS :** `212.47.245.210`
 
-Dans le projet :
+---
+
+## 0. Prérequis déjà faits (à vérifier)
+
+- [x] VPS Scaleway créé
+- [x] DNS `A` → `leafitome.prumme.dev` → `212.47.245.210`
+
+Vérifie la propagation (depuis ton Mac) :
 
 ```bash
-npm run deploy
+dig +short leafitome.prumme.dev
 ```
 
-Attends la fin du script `gh-pages`. Vérifie ensuite que le site est bien en ligne :
+Doit afficher `212.47.245.210`. Si vide, attends quelques minutes.
 
-[https://prumme.github.io/leafitome/](https://prumme.github.io/leafitome/)
+---
 
-## 2. Vérifier GitHub Pages
+## 1. Connexion SSH
 
-Dans le dépôt GitHub → **Settings** → **Pages** :
+```bash
+ssh root@212.47.245.210
+```
 
-- Source : branche **`gh-pages`**
-- Dossier : **`/` (root)**
+(Adapte l’utilisateur si Scaleway t’a donné `ubuntu` ou un user custom.)
 
-Sans ça, le service worker et le manifeste ne seront pas servis correctement.
+---
 
-## 3. Tester l’installabilité (optionnel mais utile)
+## 2. Sécurité de base + Docker (une seule fois)
 
-Sur un ordi, ouvre Chrome → DevTools → onglet **Application** :
+Sur le VPS :
 
-- **Manifest** : nom Leafitome, icônes 192 / 512 présentes
-- **Service workers** : un worker actif sur `/leafitome/`
+```bash
+apt update && apt upgrade -y
+apt install -y curl git ufw
 
-Sur mobile, tu peux aussi utiliser [https://www.pwabuilder.com/](https://www.pwabuilder.com/) en collant l’URL du site pour un rapport rapide.
+ufw allow OpenSSH
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw --force enable
 
-## 4. Installer sur ton téléphone
+curl -fsSL https://get.docker.com | sh
+```
 
-### iOS (important)
+Vérifie :
 
-- Utilise **Safari** uniquement pour « Sur l’écran d’accueil ».
-- Chrome / Firefox iOS ne proposent en général **pas** la vraie installation PWA.
-- Après install, ouvre l’icône depuis l’écran d’accueil (pas un onglet Safari).
+```bash
+docker --version
+docker compose version
+```
 
-### Android
+---
 
-- **Chrome** → menu → Installer / Ajouter à l’écran d’accueil.
+## 3. Pousser le code sur GitHub (depuis ton Mac)
 
-Détails pas à pas : voir la section **Installer l’app sur mobile** du [README.md](./README.md).
+Dans le projet local, commit + push sur ton dépôt GitHub (si ce n’est pas déjà fait).
 
-## 5. Données entre appareils
+Sur le VPS tu clonerás ce dépôt.  
+Si le repo est **privé**, crée un **Deploy key** ou un **Personal Access Token** GitHub pour le clone.
 
-La PWA ne synchronise **pas** le cloud.
+---
 
-Pour migrer téléphone ↔ ordi :
+## 4. Installer Leafitome sur le VPS
 
-1. Page **Récurrences** → bouton **Exporter** (télécharge un JSON).
-2. Sur l’autre appareil → **Importer** → déposer le fichier.
+Toujours en SSH sur le VPS :
 
-Fais une export de sécurité avant un import (l’import remplace tout).
+```bash
+mkdir -p /opt/leafitome
+cd /opt/leafitome
+git clone https://github.com/TON_USER/TON_REPO.git .
+```
 
-## 6. Si l’install ne propose rien
+Remplace `TON_USER/TON_REPO` par ton vrai dépôt.
 
-| Cause probable | Action |
-|----------------|--------|
-| Ancien déploiement sans PWA | Relancer `npm run deploy` |
-| Pas en HTTPS | Utiliser l’URL GitHub Pages (déjà HTTPS) |
-| Cache navigateur | Vider le cache / ouvrir en navigation privée puis réessayer |
-| iOS hors Safari | Repasser sur Safari |
-| Mauvais `base` / scope | Vérifier que l’URL contient bien `/leafitome/` |
+### Fichier secrets
 
-## 7. Rien d’autre à configurer côté Apple / Google
+```bash
+cp .env.production.example .env.production
+nano .env.production
+```
 
-Pas besoin de compte développeur Apple ou Google Play pour une PWA installée depuis le navigateur. Tu n’as **pas** à publier sur les stores pour cet usage.
+**Obligatoire :** change au minimum :
+
+| Variable | Action |
+|----------|--------|
+| `POSTGRES_PASSWORD` | Mot de passe fort (différent du local) |
+| `JWT_SECRET` | Longue chaîne aléatoire |
+
+Pour générer un secret :
+
+```bash
+openssl rand -hex 32
+```
+
+Exemple de contenu final :
+
+```env
+POSTGRES_USER=leafitome
+POSTGRES_PASSWORD=...ton-mot-de-passe...
+POSTGRES_DB=leafitome
+
+JWT_SECRET=...sortie-openssl...
+CORS_ORIGIN=https://leafitome.prumme.dev
+COOKIE_SECURE=true
+```
+
+Puis :
+
+```bash
+chmod 600 .env.production
+```
+
+---
+
+## 5. Lancer la prod
+
+```bash
+cd /opt/leafitome
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+Suivre les logs (surtout Caddy pour le certificat HTTPS) :
+
+```bash
+docker compose -f docker-compose.prod.yml logs -f caddy
+```
+
+Au premier démarrage, Caddy demande un certificat Let’s Encrypt pour `leafitome.prumme.dev` (renouvellement automatique ensuite).
+
+---
+
+## 6. Vérifications
+
+Dans le navigateur :
+
+1. https://leafitome.prumme.dev → landing  
+2. Créer un compte / se connecter  
+3. https://leafitome.prumme.dev/api/health → `{"ok":true,"service":"leafitome-api"}`
+
+Depuis le VPS :
+
+```bash
+curl -s https://leafitome.prumme.dev/api/health
+```
+
+---
+
+## 7. Mises à jour (plus tard)
+
+```bash
+cd /opt/leafitome
+git pull
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+---
+
+## 8. Commandes utiles
+
+```bash
+# Statut
+docker compose -f docker-compose.prod.yml ps
+
+# Logs
+docker compose -f docker-compose.prod.yml logs -f
+
+# Arrêter
+docker compose -f docker-compose.prod.yml --env-file .env.production down
+```
+
+---
+
+## 9. Si ça ne marche pas
+
+| Problème | Piste |
+|----------|--------|
+| Certificat HTTPS échoue | DNS pas encore propagé, ou ports 80/443 fermés (`ufw status`) |
+| Site inaccessible | `docker compose … ps` — containers up ? |
+| `/api/health` 502 | API pas démarrée : `docker compose … logs api` |
+| Login impossible | Vérifier `CORS_ORIGIN` et `COOKIE_SECURE=true` dans `.env.production` |
+| `git clone` refuse | Repo privé → token / deploy key |
+
+---
+
+## 10. PWA mobile (après mise en ligne)
+
+Même principe qu’avant, mais avec la **nouvelle URL** :
+
+- iOS Safari → Partager → Sur l’écran d’accueil → https://leafitome.prumme.dev  
+- Android Chrome → Installer l’application  
+
+Les données sont maintenant liées à **ton compte** (plus besoin d’export pour synchroniser entre appareils du même user).
+
+---
+
+## 11. Ce que tu n’as pas à gérer
+
+- Renouvellement HTTPS → **Caddy** s’en charge  
+- Migrations SQL → l’API les applique au démarrage  
+- Exposition Postgres sur Internet → **non** (réseau Docker interne uniquement)
