@@ -77,7 +77,7 @@ export function OccurrenceCard({
   onDidLeave,
 }: OccurrenceCardProps) {
   const { toggleDone } = useHistoryActions()
-  const { todo, date, status, early } = occurrence
+  const { todo, date, status, early, historyId } = occurrence
   const isDone = status === 'DONE'
   const isMissed = status === 'MISSED'
   const canToggle =
@@ -125,7 +125,7 @@ export function OccurrenceCard({
       setPhase('unchecking')
       setOptimisticDone(false)
 
-      const persist = toggleDone(todo.id, date, true)
+      const persist = toggleDone(todo.id, date, true, historyId)
 
       if (!reduced) await wait(520)
 
@@ -161,7 +161,7 @@ export function OccurrenceCard({
       onWillLeave?.(occurrence)
     }
 
-    const persist = toggleDone(todo.id, date, false)
+    const persist = toggleDone(todo.id, date, false, historyId)
 
     if (!reduced) {
       // 2.3s + délai 2e onde 50ms + marge de fondu
@@ -302,8 +302,13 @@ export function OccurrenceCard({
             <PriorityBadge priority={todo.priority} />
             <RecurrenceBadge recurrence={todo.recurrence} />
             {early ? <Badge tone="moss">En avance</Badge> : null}
+            {todo.recurrence === 'ONDAY' && todo.deadline ? (
+              <Badge tone="missed">Avant le {formatShortDate(todo.deadline)}</Badge>
+            ) : null}
             {showDate || early ? (
-              <Badge tone="neutral">Échéance {formatShortDate(date)}</Badge>
+              <Badge tone="neutral">
+                {early ? `Échéance ${formatShortDate(date)}` : formatShortDate(date)}
+              </Badge>
             ) : null}
           </div>
         </div>

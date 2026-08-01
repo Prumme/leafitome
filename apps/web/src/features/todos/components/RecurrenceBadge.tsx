@@ -1,13 +1,13 @@
 import type { Recurrence } from '@/features/todos/types/todo.types'
 import { RECURRENCE_LABELS } from '@/features/todos/utils/recurrence'
 import { Badge } from '@/shared/components/Badge'
-import { CalendarDays, CalendarRange, RefreshCw, Sun } from 'lucide-react'
+import { CalendarClock, CalendarDays, CalendarRange, Sun } from 'lucide-react'
 
 const icons = {
   DAILY: Sun,
   WEEKLY: CalendarDays,
   MONTHLY: CalendarRange,
-  ONDAY: RefreshCw,
+  ONDAY: CalendarClock,
 } as const
 
 interface RecurrenceBadgeProps {

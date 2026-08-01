@@ -5,7 +5,7 @@ import { HTTPException } from 'hono/http-exception'
 import { sql } from '../db/client.js'
 import { env } from '../env.js'
 import { hashPassword, verifyPassword } from '../lib/password.js'
-import { loginSchema, registerSchema } from '../lib/schemas.js'
+import { loginSchema, registerSchema, updateProfileSchema } from '../lib/schemas.js'
 import { signSession } from '../lib/session.js'
 import { COOKIE_NAME, requireAuth, type AuthVariables } from '../middleware/auth.js'
 
@@ -94,5 +94,20 @@ authRoutes.get('/me', requireAuth, async (c) => {
   `
   const user = rows[0]
   if (!user) throw new HTTPException(401, { message: 'Utilisateur introuvable' })
+  return c.json({ user: publicUser(user) })
+})
+
+authRoutes.patch('/me', requireAuth, async (c) => {
+  const session = c.get('user')
+  const body = updateProfileSchema.parse(await c.req.json())
+
+  const rows = await sql<UserRow[]>`
+    UPDATE users
+    SET display_name = ${body.displayName}, updated_at = now()
+    WHERE id = ${session.sub}::uuid
+    RETURNING id, email, display_name, password_hash, created_at
+  `
+  const user = rows[0]
+  if (!user) throw new HTTPException(404, { message: 'Utilisateur introuvable' })
   return c.json({ user: publicUser(user) })
 })

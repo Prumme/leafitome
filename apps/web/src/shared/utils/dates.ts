@@ -42,7 +42,10 @@ export function toDateString(date: Date): string {
 }
 
 export function parseDateString(value: string): Date {
-  return startOfDay(parseISO(value))
+  // Accepte "YYYY-MM-DD" ou un ISO plus long ; ignore le reste.
+  const match = value.trim().match(/^(\d{4}-\d{2}-\d{2})/)
+  const normalized = match?.[1] ?? value.trim().slice(0, 10)
+  return startOfDay(parseISO(normalized))
 }
 
 export function todayString(): string {

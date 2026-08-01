@@ -20,6 +20,7 @@ interface AuthState {
     displayName?: string
   }) => Promise<void>
   logout: () => Promise<void>
+  updateDisplayName: (displayName: string | null) => Promise<void>
   clearError: () => void
 }
 
@@ -85,5 +86,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     setToken(null)
     set({ user: null, status: 'anonymous', error: null })
+  },
+
+  updateDisplayName: async (displayName) => {
+    const data = await apiFetch<{ user: AuthUser }>('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ displayName }),
+    })
+    set({ user: data.user, error: null })
   },
 }))

@@ -1,7 +1,9 @@
 import type { HistoryEntry, HistoryStatus } from '@/features/history/types/history.types'
 import type { Todo } from '@/features/todos/types/todo.types'
 import {
+  findDeadlineCycleDone,
   getNextScheduledDateInPeriod,
+  isDeadlineTodo,
   isTodoScheduledOn,
   supportsEarlyCompletion,
 } from '@/features/todos/utils/recurrence'
@@ -39,6 +41,43 @@ export function resolveOccurrenceStatus(
   return { status: 'MISSED' }
 }
 
+/**
+ * Statut d’une todo à échéance pour un jour donné.
+ * - Cycle déjà DONE → affiché fait (historyId du DONE du cycle)
+ * - Jour de l’échéance passé sans DONE → MISSED
+ * - Avant l’échéance → PENDING / UPCOMING (pas MISSED les jours intermédiaires)
+ */
+export function resolveDeadlineOccurrenceStatus(
+  todo: Todo,
+  date: string,
+  entries: HistoryEntry[],
+): { status: OccurrenceStatus; historyId?: string } {
+  const dayEntry = entries.find((item) => item.todoId === todo.id && item.date === date)
+  if (dayEntry) {
+    return { status: dayEntry.status, historyId: dayEntry.id }
+  }
+
+  const cycleDone = findDeadlineCycleDone(todo, entries)
+  if (cycleDone) {
+    return { status: 'DONE', historyId: cycleDone.id }
+  }
+
+  if (!todo.deadline) {
+    return resolveOccurrenceStatus(todo.id, date, entries)
+  }
+
+  // Avant la deadline : jamais MISSED sur les jours passés
+  if (date < todo.deadline) {
+    if (isFutureDate(date)) return { status: 'UPCOMING' }
+    return { status: 'PENDING' }
+  }
+
+  // Jour de deadline (ou au-delà, normalement non planifié)
+  if (isFutureDate(date)) return { status: 'UPCOMING' }
+  if (isToday(date)) return { status: 'PENDING' }
+  return { status: 'MISSED' }
+}
+
 export function getOccurrencesForRange(
   todos: Todo[],
   entries: HistoryEntry[],
@@ -52,7 +91,9 @@ export function getOccurrencesForRange(
     const dateStr = toDateString(date)
     for (const todo of todos) {
       if (!isTodoScheduledOn(todo, date)) continue
-      const resolved = resolveOccurrenceStatus(todo.id, dateStr, entries)
+      const resolved = isDeadlineTodo(todo)
+        ? resolveDeadlineOccurrenceStatus(todo, dateStr, entries)
+        : resolveOccurrenceStatus(todo.id, dateStr, entries)
       occurrences.push({
         todo,
         date: dateStr,
@@ -115,15 +156,44 @@ export interface CompletionStats {
 }
 
 export function computeCompletionStats(occurrences: TodoOccurrence[]): CompletionStats {
-  const total = occurrences.length
-  const done = occurrences.filter((item) => item.status === 'DONE').length
-  const missed = occurrences.filter((item) => item.status === 'MISSED').length
-  const pending = occurrences.filter((item) => item.status === 'PENDING').length
-  const upcoming = occurrences.filter((item) => item.status === 'UPCOMING').length
-  // Faites / toutes les occurrences de la période (pending & upcoming baissent le taux)
+  const normalized = collapseDeadlineOccurrences(occurrences)
+  const total = normalized.length
+  const done = normalized.filter((item) => item.status === 'DONE').length
+  const missed = normalized.filter((item) => item.status === 'MISSED').length
+  const pending = normalized.filter((item) => item.status === 'PENDING').length
+  const upcoming = normalized.filter((item) => item.status === 'UPCOMING').length
   const completionRate = total === 0 ? 0 : Math.round((done / total) * 100)
 
   return { total, done, missed, pending, upcoming, completionRate }
+}
+
+/** Une todo à échéance ne compte qu’une fois dans les stats de période. */
+function collapseDeadlineOccurrences(list: TodoOccurrence[]): TodoOccurrence[] {
+  const today = toDateString(new Date())
+  const others: TodoOccurrence[] = []
+  const byTodo = new Map<string, TodoOccurrence[]>()
+
+  for (const item of list) {
+    if (!isDeadlineTodo(item.todo)) {
+      others.push(item)
+      continue
+    }
+    const group = byTodo.get(item.todo.id) ?? []
+    group.push(item)
+    byTodo.set(item.todo.id, group)
+  }
+
+  const collapsed: TodoOccurrence[] = []
+  for (const group of byTodo.values()) {
+    const preferred =
+      group.find((item) => item.date === today) ??
+      group.find((item) => item.status === 'DONE') ??
+      group.find((item) => item.date === item.todo.deadline) ??
+      group[0]
+    if (preferred) collapsed.push(preferred)
+  }
+
+  return [...others, ...collapsed]
 }
 
 export function getRemainingForToday(

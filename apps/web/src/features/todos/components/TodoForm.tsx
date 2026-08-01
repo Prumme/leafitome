@@ -15,7 +15,7 @@ import { Input } from '@/shared/components/Input'
 import { Select } from '@/shared/components/Select'
 import { Textarea } from '@/shared/components/Textarea'
 import { Toggle } from '@/shared/components/Toggle'
-import { ALL_DAYS, DAY_LABELS, getDayOfMonth } from '@/shared/utils/dates'
+import { ALL_DAYS, DAY_LABELS, getDayOfMonth, todayString } from '@/shared/utils/dates'
 import { cn } from '@/shared/utils/cn'
 
 interface TodoFormProps {
@@ -53,6 +53,7 @@ export function TodoForm({
   const [dayOfMonth, setDayOfMonth] = useState(
     initial?.dayOfMonth ?? getDayOfMonth(new Date()),
   )
+  const [deadline, setDeadline] = useState(initial?.deadline ?? todayString())
   const [earlyCompletable, setEarlyCompletable] = useState(initial?.earlyCompletable ?? false)
   const [priority, setPriority] = useState<Priority>(initial?.priority ?? 'MEDIUM')
   const [enabled, setEnabled] = useState(initial?.enabled ?? true)
@@ -60,8 +61,9 @@ export function TodoForm({
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const needsDays = recurrence === 'WEEKLY' || recurrence === 'ONDAY'
+  const needsDays = recurrence === 'WEEKLY'
   const needsDayOfMonth = recurrence === 'MONTHLY'
+  const needsDeadline = recurrence === 'ONDAY'
   const canBeEarly = recurrence === 'WEEKLY' || recurrence === 'MONTHLY'
 
   const canSubmit = useMemo(() => name.trim().length > 0, [name])
@@ -80,6 +82,10 @@ export function TodoForm({
       setError('Sélectionne au moins un jour.')
       return
     }
+    if (needsDeadline && !deadline) {
+      setError('Choisis une date d’échéance.')
+      return
+    }
 
     setSaving(true)
     setError(null)
@@ -91,6 +97,7 @@ export function TodoForm({
       days: needsDays ? days : undefined,
       dayOfMonth: needsDayOfMonth ? dayOfMonth : undefined,
       earlyCompletable: canBeEarly ? earlyCompletable : false,
+      deadline: needsDeadline ? deadline : null,
       priority,
       enabled,
       color,
@@ -137,6 +144,9 @@ export function TodoForm({
             setRecurrence(next)
             if (next !== 'WEEKLY' && next !== 'MONTHLY') {
               setEarlyCompletable(false)
+            }
+            if (next === 'ONDAY' && !deadline) {
+              setDeadline(todayString())
             }
           }}
         />
@@ -185,6 +195,23 @@ export function TodoForm({
           value={dayOfMonth}
           onChange={(event) => setDayOfMonth(Number(event.target.value))}
         />
+      ) : null}
+
+      {needsDeadline ? (
+        <div className="space-y-1.5">
+          <Input
+            label="Date d’échéance"
+            name="deadline"
+            type="date"
+            value={deadline}
+            onChange={(event) => setDeadline(event.target.value)}
+            required
+          />
+          <p className="text-xs text-ink-muted">
+            Faisable chaque jour jusqu’à cette date. Tu pourras changer l’échéance pour la
+            relancer.
+          </p>
+        </div>
       ) : null}
 
       {canBeEarly ? (

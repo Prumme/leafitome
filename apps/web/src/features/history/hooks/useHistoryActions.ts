@@ -5,7 +5,12 @@ import type { HistoryStatus } from '@/features/history/types/history.types'
 export function useHistoryActions(): {
   markDone: (todoId: string, date: string) => Promise<void>
   markMissed: (todoId: string, date: string) => Promise<void>
-  toggleDone: (todoId: string, date: string, currentlyDone: boolean) => Promise<void>
+  toggleDone: (
+    todoId: string,
+    date: string,
+    currentlyDone: boolean,
+    historyId?: string,
+  ) => Promise<void>
   clearStatus: (historyId: string) => Promise<void>
 } {
   const markStatus = useHistoryStore((state) => state.markStatus)
@@ -29,9 +34,13 @@ export function useHistoryActions(): {
   )
 
   const toggleDone = useCallback(
-    async (todoId: string, date: string, currentlyDone: boolean) => {
+    async (todoId: string, date: string, currentlyDone: boolean, historyId?: string) => {
       if (currentlyDone) {
-        const entry = useHistoryStore.getState().getEntry(todoId, date)
+        const entry =
+          useHistoryStore.getState().getEntry(todoId, date) ??
+          (historyId
+            ? useHistoryStore.getState().entries.find((item) => item.id === historyId)
+            : undefined)
         if (entry) await removeEntry(entry.id)
         return
       }

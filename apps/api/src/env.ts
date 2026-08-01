@@ -38,4 +38,7 @@ export const env = {
     process.env.COOKIE_SECURE === 'true' ||
     process.env.NODE_ENV === 'production',
   NODE_ENV: process.env.NODE_ENV ?? 'development',
+  VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY ?? '',
+  VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY ?? '',
+  VAPID_SUBJECT: process.env.VAPID_SUBJECT ?? 'mailto:hello@leafitome.local',
 }

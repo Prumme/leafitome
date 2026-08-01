@@ -8,10 +8,10 @@ interface CompletionOverviewProps {
 
 export function CompletionOverview({ stats }: CompletionOverviewProps) {
   return (
-    <Card className="space-y-5">
-      <div>
+    <Card className="min-w-0 max-w-full space-y-5 overflow-hidden">
+      <div className="min-w-0">
         <h2 className="text-lg font-semibold text-forest-950">Taux de complétion</h2>
-        <p className="text-sm text-ink-muted">
+        <p className="text-sm text-ink-muted break-words">
           Part des tâches faites sur toutes celles de la période (en attente incluses).
         </p>
       </div>
@@ -20,9 +20,10 @@ export function CompletionOverview({ stats }: CompletionOverviewProps) {
         value={stats.completionRate}
         label="Complétion"
         tone={stats.completionRate >= 70 ? 'done' : stats.completionRate >= 40 ? 'forest' : 'missed'}
+        className="min-w-0"
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4">
         <MiniStat label="Total" value={stats.total} />
         <MiniStat label="Faites" value={stats.done} className="text-done-700" />
         <MiniStat label="Manquées" value={stats.missed} className="text-missed-700" />

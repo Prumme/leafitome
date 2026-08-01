@@ -11,7 +11,7 @@ export interface Todo {
   name: string
   description?: string
   recurrence: Recurrence
-  /** Jours de la semaine concernés (WEEKLY / ONDAY) */
+  /** Jours de la semaine concernés (WEEKLY) */
   days?: Day[]
   /** Jour du mois (1–31) pour MONTHLY */
   dayOfMonth?: number
@@ -20,6 +20,10 @@ export interface Todo {
    * (dans la même semaine / le même mois).
    */
   earlyCompletable?: boolean
+  /** ONDAY : date d’échéance (YYYY-MM-DD), faisable jusqu’à ce jour inclus */
+  deadline?: string | null
+  /** Début du cycle d’échéance courant (ISO) — mis à jour quand la deadline change */
+  deadlineUpdatedAt?: string | null
   priority: Priority
   createdAt: string
   updatedAt: string

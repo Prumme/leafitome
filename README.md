@@ -63,6 +63,7 @@ apps/
   api/     # Hono
 deploy/
   Caddyfile
+docs/                    # notes produit + ops
 docker-compose.yml       # Postgres local
 docker-compose.prod.yml  # Postgres + API + Caddy
 ```

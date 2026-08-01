@@ -7,11 +7,12 @@ import {
   type MouseEvent,
 } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarCheck2, LayoutDashboard, Leaf, LogOut, RefreshCw } from 'lucide-react'
+import { CalendarCheck2, LayoutDashboard, Leaf, LogOut, RefreshCw, UserRound } from 'lucide-react'
 import { usePageTransition } from '@/app/transitions/PageTransitionContext'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useBadgeStore } from '@/features/badges/store/badgeStore'
 import { useHistoryStore } from '@/features/history/store/historyStore'
+import { useNotificationPrefsStore } from '@/features/notifications/store/notificationPrefsStore'
 import { useTodoStore } from '@/features/todos/store/todoStore'
 import { SITE } from '@/shared/config/site'
 import { cn } from '@/shared/utils/cn'
@@ -20,6 +21,7 @@ const links = [
   { to: '/app', label: 'Tâches', icon: CalendarCheck2, end: true },
   { to: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: false },
   { to: '/app/recurrences', label: 'Récurrences', icon: RefreshCw, end: false },
+  { to: '/app/profile', label: 'Profil', icon: UserRound, end: false },
 ] as const
 
 type NavLinkItem = (typeof links)[number]
@@ -132,6 +134,7 @@ export function Navbar() {
       loaded: false,
       pendingToasts: [],
     })
+    useNotificationPrefsStore.getState().reset()
     navigate('/')
   }
 
@@ -208,7 +211,7 @@ export function Navbar() {
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-forest-200/80 bg-surface-elevated/95 backdrop-blur-md md:hidden">
         <div
           ref={mobile.navRef}
-          className="relative mx-auto grid max-w-5xl grid-cols-3 gap-1 px-2 py-2"
+          className="relative mx-auto grid max-w-5xl grid-cols-4 gap-1 px-2 py-2"
         >
           <span
             aria-hidden

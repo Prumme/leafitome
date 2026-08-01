@@ -15,12 +15,32 @@ type TodoRow = {
   days: string[] | null
   day_of_month: number | null
   early_completable: boolean
+  deadline: string | null
+  deadline_updated_at: Date | null
   priority: 'VHIGH' | 'HIGH' | 'MEDIUM' | 'LOW' | 'VLOW'
   color: string | null
   enabled: boolean
   archived: boolean
   created_at: Date
   updated_at: Date
+}
+
+/** Normalise DATE Postgres (string ou Date) → YYYY-MM-DD. */
+function toDateOnly(value: string | Date | null | undefined): string | undefined {
+  if (value == null) return undefined
+  if (typeof value === 'string') {
+    // "2026-08-15" ou ISO
+    const match = value.match(/^(\d{4}-\d{2}-\d{2})/)
+    return match?.[1]
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    // DATE Postgres est souvent en UTC à minuit
+    const y = value.getUTCFullYear()
+    const m = String(value.getUTCMonth() + 1).padStart(2, '0')
+    const d = String(value.getUTCDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+  return undefined
 }
 
 function mapTodo(row: TodoRow) {
@@ -32,6 +52,10 @@ function mapTodo(row: TodoRow) {
     days: row.days ?? undefined,
     dayOfMonth: row.day_of_month ?? undefined,
     earlyCompletable: row.early_completable,
+    deadline: toDateOnly(row.deadline),
+    deadlineUpdatedAt: row.deadline_updated_at
+      ? row.deadline_updated_at.toISOString()
+      : undefined,
     priority: row.priority,
     color: row.color ?? undefined,
     enabled: row.enabled,
@@ -44,6 +68,35 @@ function mapTodo(row: TodoRow) {
 function daysParam(days: string[] | null | undefined) {
   if (!days || days.length === 0) return null
   return days
+}
+
+function resolveDeadlineFields(
+  recurrence: string,
+  deadline: string | null | undefined,
+  previousDeadline: string | null | undefined,
+  previousUpdatedAt: Date | null | undefined,
+  explicitUpdatedAt?: string,
+): { deadline: string | null; deadlineUpdatedAt: Date | null } {
+  if (recurrence !== 'ONDAY') {
+    return { deadline: null, deadlineUpdatedAt: null }
+  }
+  const next = deadline ?? null
+  if (!next) {
+    return { deadline: null, deadlineUpdatedAt: null }
+  }
+  const prev =
+    previousDeadline == null
+      ? null
+      : typeof previousDeadline === 'string'
+        ? previousDeadline.slice(0, 10)
+        : String(previousDeadline).slice(0, 10)
+  if (explicitUpdatedAt) {
+    return { deadline: next, deadlineUpdatedAt: new Date(explicitUpdatedAt) }
+  }
+  if (next !== prev || !previousUpdatedAt) {
+    return { deadline: next, deadlineUpdatedAt: new Date() }
+  }
+  return { deadline: next, deadlineUpdatedAt: previousUpdatedAt }
 }
 
 export const todoRoutes = new Hono<{ Variables: AuthVariables }>()
@@ -69,10 +122,18 @@ todoRoutes.put('/replace', async (c) => {
       const id = body.id ?? createId('todo')
       const now = new Date()
       const days = daysParam(body.days)
+      const { deadline, deadlineUpdatedAt } = resolveDeadlineFields(
+        body.recurrence,
+        body.deadline,
+        null,
+        null,
+        body.deadlineUpdatedAt,
+      )
       await tx`
         INSERT INTO todos (
           id, user_id, name, description, recurrence, days, day_of_month,
-          early_completable, priority, color, enabled, archived, created_at, updated_at
+          early_completable, deadline, deadline_updated_at, priority, color,
+          enabled, archived, created_at, updated_at
         ) VALUES (
           ${id},
           ${userId}::uuid,
@@ -82,6 +143,8 @@ todoRoutes.put('/replace', async (c) => {
           ${days},
           ${body.dayOfMonth ?? null},
           ${body.earlyCompletable ?? false},
+          ${deadline},
+          ${deadlineUpdatedAt},
           ${body.priority},
           ${body.color ?? null},
           ${body.enabled ?? true},
@@ -105,11 +168,19 @@ todoRoutes.post('/', async (c) => {
   const id = body.id ?? createId('todo')
   const now = new Date()
   const days = daysParam(body.days)
+  const { deadline, deadlineUpdatedAt } = resolveDeadlineFields(
+    body.recurrence,
+    body.deadline,
+    null,
+    null,
+    body.deadlineUpdatedAt,
+  )
 
   const rows = await sql<TodoRow[]>`
     INSERT INTO todos (
       id, user_id, name, description, recurrence, days, day_of_month,
-      early_completable, priority, color, enabled, archived, created_at, updated_at
+      early_completable, deadline, deadline_updated_at, priority, color,
+      enabled, archived, created_at, updated_at
     ) VALUES (
       ${id},
       ${userId}::uuid,
@@ -119,6 +190,8 @@ todoRoutes.post('/', async (c) => {
       ${days},
       ${body.dayOfMonth ?? null},
       ${body.earlyCompletable ?? false},
+      ${deadline},
+      ${deadlineUpdatedAt},
       ${body.priority},
       ${body.color ?? null},
       ${body.enabled ?? true},
@@ -147,8 +220,7 @@ todoRoutes.patch('/:id', async (c) => {
   const name = body.name ?? current.name
   const description = body.description !== undefined ? (body.description ?? null) : current.description
   const recurrence = body.recurrence ?? current.recurrence
-  const days =
-    body.days !== undefined ? daysParam(body.days) : current.days
+  const days = body.days !== undefined ? daysParam(body.days) : current.days
   const dayOfMonth = body.dayOfMonth !== undefined ? (body.dayOfMonth ?? null) : current.day_of_month
   const earlyCompletable =
     body.earlyCompletable !== undefined ? body.earlyCompletable : current.early_completable
@@ -156,6 +228,19 @@ todoRoutes.patch('/:id', async (c) => {
   const color = body.color !== undefined ? (body.color ?? null) : current.color
   const enabled = body.enabled !== undefined ? body.enabled : current.enabled
   const archived = body.archived !== undefined ? body.archived : current.archived
+
+  const currentDeadline = toDateOnly(current.deadline) ?? null
+
+  const nextDeadlineInput =
+    body.deadline !== undefined ? body.deadline : currentDeadline
+
+  const { deadline, deadlineUpdatedAt } = resolveDeadlineFields(
+    recurrence,
+    nextDeadlineInput,
+    currentDeadline,
+    current.deadline_updated_at,
+    body.deadlineUpdatedAt,
+  )
 
   const rows = await sql<TodoRow[]>`
     UPDATE todos SET
@@ -165,6 +250,8 @@ todoRoutes.patch('/:id', async (c) => {
       days = ${days},
       day_of_month = ${dayOfMonth},
       early_completable = ${earlyCompletable},
+      deadline = ${deadline},
+      deadline_updated_at = ${deadlineUpdatedAt},
       priority = ${priority},
       color = ${color},
       enabled = ${enabled},

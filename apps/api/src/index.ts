@@ -6,9 +6,12 @@ import { ZodError } from 'zod'
 import { migrate } from './db/migrate.js'
 import { sql } from './db/client.js'
 import { env } from './env.js'
+import { configurePush } from './lib/push.js'
+import { startReminderScheduler } from './lib/reminderJob.js'
 import { authRoutes } from './routes/auth.js'
 import { badgeRoutes } from './routes/badges.js'
 import { historyRoutes } from './routes/history.js'
+import { notificationRoutes } from './routes/notifications.js'
 import { todoRoutes } from './routes/todos.js'
 
 const app = new Hono()
@@ -29,6 +32,7 @@ app.route('/auth', authRoutes)
 app.route('/todos', todoRoutes)
 app.route('/history', historyRoutes)
 app.route('/badges', badgeRoutes)
+app.route('/notifications', notificationRoutes)
 
 app.onError((err, c) => {
   if (err instanceof ZodError) {
@@ -50,6 +54,8 @@ app.onError((err, c) => {
 async function main() {
   await migrate(sql)
   console.log('Database ready')
+  configurePush()
+  startReminderScheduler()
 
   serve({ fetch: app.fetch, port: env.PORT }, (info) => {
     console.log(`API Leafitome sur http://localhost:${info.port}`)

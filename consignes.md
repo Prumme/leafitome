@@ -109,6 +109,11 @@ POSTGRES_DB=leafitome
 JWT_SECRET=...sortie-openssl...
 CORS_ORIGIN=https://leafitome.prumme.dev
 COOKIE_SECURE=true
+
+# Web Push (générer : npx web-push generate-vapid-keys)
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:hello@prumme.dev
 ```
 
 Puis :
@@ -116,6 +121,8 @@ Puis :
 ```bash
 chmod 600 .env.production
 ```
+
+> Sans `VAPID_*`, le compose prod refuse de démarrer l’API. Détails : `docs/ops.md` § Notifications.
 
 ---
 

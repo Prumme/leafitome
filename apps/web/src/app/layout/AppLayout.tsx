@@ -7,6 +7,7 @@ import { BadgeToast } from '@/features/badges/components/BadgeToast'
 import { useBadgeUnlockWatcher } from '@/features/badges/hooks/useBadgeUnlockWatcher'
 import { DayCompleteOverlay } from '@/features/celebration/DayCompleteOverlay'
 import { useDayCompleteCelebration } from '@/features/celebration/useDayCompleteCelebration'
+import { useNotificationScheduler } from '@/features/notifications/hooks/useNotificationScheduler'
 import { useBootstrapData } from '@/shared/hooks/useBootstrapData'
 import { Leaf } from 'lucide-react'
 
@@ -14,6 +15,7 @@ export function AppLayout() {
   const { ready } = useBootstrapData()
   const celebrating = useDayCompleteCelebration(ready)
   useBadgeUnlockWatcher(ready)
+  useNotificationScheduler(ready)
 
   return (
     <PageTransitionProvider>

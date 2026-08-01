@@ -3,7 +3,7 @@ import { Archive, Leaf, Pencil, Power } from 'lucide-react'
 import type { Todo } from '@/features/todos/types/todo.types'
 import { PriorityBadge } from '@/features/todos/components/PriorityBadge'
 import { RecurrenceBadge } from '@/features/todos/components/RecurrenceBadge'
-import { DAY_LABELS } from '@/shared/utils/dates'
+import { DAY_LABELS, formatShortDate } from '@/shared/utils/dates'
 import { Badge } from '@/shared/components/Badge'
 import { Button } from '@/shared/components/Button'
 import { Card } from '@/shared/components/Card'
@@ -141,11 +141,14 @@ export function TodoManageCard({
                 <RecurrenceBadge recurrence={todo.recurrence} />
                 {!todo.enabled ? <Badge tone="neutral">Désactivée</Badge> : null}
                 {todo.archived ? <Badge tone="missed">Archivée</Badge> : null}
-                {todo.days && todo.days.length > 0 ? (
+                {todo.days && todo.days.length > 0 && todo.recurrence === 'WEEKLY' ? (
                   <Badge tone="forest">{todo.days.map((day) => DAY_LABELS[day]).join(', ')}</Badge>
                 ) : null}
                 {todo.recurrence === 'MONTHLY' && todo.dayOfMonth ? (
                   <Badge tone="forest">Le {todo.dayOfMonth}</Badge>
+                ) : null}
+                {todo.recurrence === 'ONDAY' && todo.deadline ? (
+                  <Badge tone="missed">Échéance {formatShortDate(todo.deadline)}</Badge>
                 ) : null}
                 {todo.earlyCompletable &&
                 (todo.recurrence === 'WEEKLY' || todo.recurrence === 'MONTHLY') ? (

@@ -26,16 +26,22 @@ export function ProgressBar({
   const pct = max === 0 ? 0 : Math.min(100, Math.max(0, Math.round((value / max) * 100)))
 
   return (
-    <div className={cn('w-full space-y-1.5', className)}>
+    <div className={cn('min-w-0 w-full max-w-full space-y-1.5', className)}>
       {(label || showValue) && (
-        <div className="flex items-center justify-between text-sm">
-          {label ? <span className="font-medium text-forest-800">{label}</span> : <span />}
-          {showValue ? <span className="tabular-nums text-ink-muted">{pct}%</span> : null}
+        <div className="flex min-w-0 items-center justify-between gap-2 text-sm">
+          {label ? (
+            <span className="min-w-0 truncate font-medium text-forest-800">{label}</span>
+          ) : (
+            <span />
+          )}
+          {showValue ? (
+            <span className="shrink-0 tabular-nums text-ink-muted">{pct}%</span>
+          ) : null}
         </div>
       )}
-      <div className="h-2.5 overflow-hidden rounded-full bg-forest-100">
+      <div className="h-2.5 w-full min-w-0 overflow-hidden rounded-full bg-forest-100">
         <div
-          className={cn('h-full rounded-full transition-[width] duration-300', toneClasses[tone])}
+          className={cn('h-full max-w-full rounded-full transition-[width] duration-300', toneClasses[tone])}
           style={{ width: `${pct}%` }}
           role="progressbar"
           aria-valuenow={pct}

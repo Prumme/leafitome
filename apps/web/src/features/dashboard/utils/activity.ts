@@ -4,6 +4,7 @@ import {
   type TodoOccurrence,
 } from '@/features/history/utils/completion'
 import type { Todo } from '@/features/todos/types/todo.types'
+import { todosForActivity } from '@/features/todos/utils/recurrence'
 import {
   addDaysTo,
   getDatesInRange,
@@ -77,7 +78,7 @@ function resolveKind(
   return 'broken'
 }
 
-/** Activité d’un jour : uniquement les todos planifiées ce jour-là (pas early). */
+/** Activité d’un jour : todos planifiées hors échéances (pas early, pas ONDAY). */
 export function getDayActivity(
   todos: Todo[],
   entries: HistoryEntry[],
@@ -85,7 +86,7 @@ export function getDayActivity(
 ): DayActivity {
   const day = typeof date === 'string' ? parseDateString(date) : date
   const dateStr = toDateString(day)
-  const occurrences = getOccurrencesForRange(todos, entries, day, day)
+  const occurrences = getOccurrencesForRange(todosForActivity(todos), entries, day, day)
   const counts = summarizeOccurrences(occurrences)
   const kind = resolveKind(
     dateStr,
