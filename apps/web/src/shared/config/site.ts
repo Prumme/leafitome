@@ -1,6 +1,7 @@
 export const SITE = {
   name: "Leafitome",
   tagline: "Suivie de tache",
+  version: "1.0.1",
   githubUrl: "https://github.com/prumme",
   githubLabel: "GitHub",
   copyrightStartYear: 2026,

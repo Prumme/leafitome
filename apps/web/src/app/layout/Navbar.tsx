@@ -21,8 +21,9 @@ const links = [
   { to: '/app', label: 'Tâches', icon: CalendarCheck2, end: true },
   { to: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: false },
   { to: '/app/recurrences', label: 'Récurrences', icon: RefreshCw, end: false },
-  { to: '/app/profile', label: 'Profil', icon: UserRound, end: false },
 ] as const
+
+const PROFILE_PATH = '/app/profile'
 
 type NavLinkItem = (typeof links)[number]
 
@@ -65,10 +66,16 @@ function useSlidingIndicator<T extends HTMLElement = HTMLElement>(activePath: st
   const updateIndicator = useCallback(() => {
     const nav = navRef.current
     const active = links.find((link) => isLinkActive(link, activePath))
-    if (!nav || !active) return
+    if (!nav || !active) {
+      setIndicator((prev) => (prev.ready ? { ...prev, ready: false } : prev))
+      return
+    }
 
     const item = itemRefs.current.get(active.to)
-    if (!item) return
+    if (!item) {
+      setIndicator((prev) => (prev.ready ? { ...prev, ready: false } : prev))
+      return
+    }
 
     const navRect = nav.getBoundingClientRect()
     const itemRect = item.getBoundingClientRect()
@@ -194,6 +201,18 @@ export function Navbar() {
                 )
               })}
             </nav>
+            <NavLink
+              to={PROFILE_PATH}
+              onClick={(event) => handleNavClick(event, PROFILE_PATH)}
+              className={cn(
+                'inline-flex items-center justify-center rounded-lg p-2 text-forest-700 transition-colors hover:bg-forest-100',
+                normalizePath(activePath) === PROFILE_PATH && 'bg-forest-100 text-forest-900',
+              )}
+              aria-label="Profil"
+              title="Profil"
+            >
+              <UserRound className="h-4 w-4" />
+            </NavLink>
             <button
               type="button"
               onClick={() => void handleLogout()}
@@ -211,7 +230,7 @@ export function Navbar() {
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-forest-200/80 bg-surface-elevated/95 backdrop-blur-md md:hidden">
         <div
           ref={mobile.navRef}
-          className="relative mx-auto grid max-w-5xl grid-cols-4 gap-1 px-2 py-2"
+          className="relative mx-auto grid max-w-5xl grid-cols-3 gap-1 px-2 py-2"
         >
           <span
             aria-hidden

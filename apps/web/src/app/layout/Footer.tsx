@@ -21,6 +21,10 @@ export function Footer() {
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-4 py-5 pb-20 text-sm text-ink-muted sm:flex-row sm:px-6 md:pb-5">
         <p>
           © {years} {SITE.name}
+          <span className="mx-1.5 text-bark-300" aria-hidden>
+            ·
+          </span>
+          <span className="tabular-nums">v{SITE.version}</span>
         </p>
         <a
           href={SITE.githubUrl}
