@@ -3,6 +3,7 @@ import { Footer } from '@/app/layout/Footer'
 import { Navbar } from '@/app/layout/Navbar'
 import { PageTransitionProvider } from '@/app/transitions/PageTransitionContext'
 import { PageTransitionOverlay } from '@/app/transitions/PageTransitionOverlay'
+import { VerifyEmailDialog } from '@/features/auth/components/VerifyEmailDialog'
 import { BadgeToast } from '@/features/badges/components/BadgeToast'
 import { useBadgeUnlockWatcher } from '@/features/badges/hooks/useBadgeUnlockWatcher'
 import { DayCompleteOverlay } from '@/features/celebration/DayCompleteOverlay'
@@ -38,6 +39,7 @@ export function AppLayout() {
           <PageTransitionOverlay />
           <DayCompleteOverlay active={celebrating} />
           <BadgeToast />
+          {ready ? <VerifyEmailDialog /> : null}
         </div>
       </div>
     </PageTransitionProvider>

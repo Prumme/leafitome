@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bell, BellOff, Lock, Save, UserRound } from 'lucide-react'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useNotificationPrefsStore } from '@/features/notifications/store/notificationPrefsStore'
@@ -22,8 +23,10 @@ import { ALL_DAYS, DAY_LABELS } from '@/shared/utils/dates'
 import { cn } from '@/shared/utils/cn'
 
 export function ProfilePage() {
+  const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const updateDisplayName = useAuthStore((state) => state.updateDisplayName)
+  const requestPasswordChange = useAuthStore((state) => state.requestPasswordChange)
   const prefs = useNotificationPrefsStore((state) => state.prefs)
   const loaded = useNotificationPrefsStore((state) => state.loaded)
   const pushConfigured = useNotificationPrefsStore((state) => state.pushConfigured)
@@ -33,6 +36,8 @@ export function ProfilePage() {
   const [savingName, setSavingName] = useState(false)
   const [nameMessage, setNameMessage] = useState<string | null>(null)
   const [nameError, setNameError] = useState<string | null>(null)
+  const [passwordBusy, setPasswordBusy] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const [permission, setPermission] = useState(getNotificationPermission())
   const [testBusy, setTestBusy] = useState(false)
   const [testMessage, setTestMessage] = useState<string | null>(null)
@@ -202,18 +207,41 @@ export function ProfilePage() {
                 Mot de passe
               </p>
               <p className="mt-1 text-xs text-ink-muted">
-                Bientôt disponible — reset par email en préparation.
+                Un email avec un lien sécurisé te sera envoyé. Ta session sera fermée.
+              </p>
+              <p className="mt-1 text-xs text-ink-muted">
+                Email {user.emailVerified ? 'vérifié' : 'non vérifié'}
               </p>
             </div>
             <Button
               type="button"
               variant="secondary"
-              disabled
-              title="Disponible après le système d’email"
+              disabled={passwordBusy}
+              onClick={() => {
+                setPasswordBusy(true)
+                setPasswordError(null)
+                void requestPasswordChange()
+                  .then(() => {
+                    navigate('/login', {
+                      replace: true,
+                      state: {
+                        notice:
+                          'Email envoyé pour changer ton mot de passe. Ta session a été fermée.',
+                      },
+                    })
+                  })
+                  .catch((err) => {
+                    setPasswordError(
+                      err instanceof Error ? err.message : 'Envoi impossible',
+                    )
+                  })
+                  .finally(() => setPasswordBusy(false))
+              }}
             >
-              Modifier le mot de passe
+              {passwordBusy ? 'Envoi…' : 'Modifier le mot de passe'}
             </Button>
           </div>
+          {passwordError ? <p className="mt-2 text-sm text-missed-700">{passwordError}</p> : null}
         </div>
       </Card>
 

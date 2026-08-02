@@ -43,4 +43,7 @@ export const env = {
   VAPID_SUBJECT: process.env.VAPID_SUBJECT ?? 'mailto:hello@leafitome.local',
   /** Mot de passe du dashboard /admin (vide = admin désactivé) */
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ?? '',
+  RESEND_API_KEY: process.env.RESEND_API_KEY ?? '',
+  EMAIL_FROM: process.env.EMAIL_FROM ?? 'Leafitome <onboarding@resend.dev>',
+  APP_URL: process.env.APP_URL ?? process.env.CORS_ORIGIN ?? 'http://localhost:5173',
 }

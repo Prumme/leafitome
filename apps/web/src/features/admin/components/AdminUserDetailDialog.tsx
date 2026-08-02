@@ -56,7 +56,9 @@ export function AdminUserDetailDialog({ user, open, onClose }: AdminUserDetailDi
       <div className="space-y-3">
         {user ? (
           <p className="text-sm text-ink-muted">
-            {user.email} · {user.todoCount} todo{user.todoCount > 1 ? 's' : ''}
+            {user.email} · {user.todoCount} todo{user.todoCount > 1 ? 's' : ''} ·{' '}
+            {user.emailVerified ? 'email vérifié' : 'email non vérifié'}
+            {user.blocked ? ' · bloqué' : ''}
           </p>
         ) : null}
 

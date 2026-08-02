@@ -1,37 +1,30 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
-import { useAuthStore } from '@/features/auth/store/authStore'
+import { apiFetch } from '@/shared/lib/api/client'
 import { Button } from '@/shared/components/Button'
 import { Input } from '@/shared/components/Input'
 import { SITE } from '@/shared/config/site'
 
-export function LoginPage() {
-  const login = useAuthStore((state) => state.login)
-  const error = useAuthStore((state) => state.error)
-  const clearError = useAuthStore((state) => state.clearError)
-  const navigate = useNavigate()
-  const location = useLocation()
-  const locationState = location.state as { from?: string; notice?: string } | null
-  const from =
-    locationState?.from && locationState.from !== '/login' ? locationState.from : '/app'
-  const notice = locationState?.notice
-
+export function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    clearError()
     setBusy(true)
+    setError(null)
+    setMessage(null)
     try {
-      await login(email, password)
-      const dest =
-        from.startsWith('/app') || from.startsWith('/invite/') ? from : '/app'
-      navigate(dest, { replace: true })
-    } catch {
-      // error in store
+      const data = await apiFetch<{ ok: true; message: string }>('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      })
+      setMessage(data.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Demande impossible')
     } finally {
       setBusy(false)
     }
@@ -54,8 +47,12 @@ export function LoginPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-600 text-white">
             <Leaf className="h-6 w-6" />
           </div>
-          <h1 className="font-display text-2xl font-bold text-forest-950">Connexion</h1>
-          <p className="text-sm text-ink-muted">Retrouve ta clairière {SITE.name}.</p>
+          <h1 className="font-display text-2xl font-bold text-forest-950">
+            Mot de passe oublié
+          </h1>
+          <p className="text-sm text-ink-muted">
+            On te renvoie un sentier vers {SITE.name}.
+          </p>
         </div>
 
         <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
@@ -68,18 +65,9 @@ export function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <Input
-            label="Mot de passe"
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {notice && !error ? (
+          {message ? (
             <p className="rounded-lg bg-done-50 px-3 py-2 text-sm text-done-800" role="status">
-              {notice}
+              {message}
             </p>
           ) : null}
           {error ? (
@@ -87,32 +75,14 @@ export function LoginPage() {
               {error}
             </p>
           ) : null}
-          <div className="flex justify-end">
-            <Link
-              to="/forgot-password"
-              className="text-sm font-medium text-forest-700 hover:underline"
-            >
-              Mot de passe oublié ?
-            </Link>
-          </div>
           <Button type="submit" className="w-full" disabled={busy}>
-            {busy ? 'Connexion…' : 'Se connecter'}
+            {busy ? 'Envoi…' : 'Envoyer le lien'}
           </Button>
         </form>
 
-        <p className="text-center text-sm text-ink-muted">
-          Pas encore de compte ?{' '}
-          <Link
-            to="/register"
-            state={{ from }}
-            className="font-medium text-forest-700 hover:underline"
-          >
-            Créer un compte
-          </Link>
-        </p>
         <p className="text-center text-sm">
-          <Link to="/" className="text-bark-500 hover:text-forest-700">
-            ← Retour à l’accueil
+          <Link to="/login" className="font-medium text-forest-700 hover:underline">
+            ← Retour à la connexion
           </Link>
         </p>
       </div>

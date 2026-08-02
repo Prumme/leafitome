@@ -53,6 +53,12 @@ export interface AdminUserRow {
   email: string
   displayName: string | null
   createdAt: string
+  emailVerified: boolean
+  emailVerifiedAt: string | null
+  blocked: boolean
+  blockedAt: string | null
+  blockedReason: string | null
+  canPurgeUnverified: boolean
   todoCount: number
 }
 

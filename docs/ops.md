@@ -230,6 +230,27 @@ Dashboard de monitoring (comptes + todos, modération activer/archiver).
 
 Ne pas exposer ce mot de passe ; ce n’est pas un compte utilisateur.
 
+Badges utiles : email vérifié / non vérifié, bloqué, purge possible (≥ 14 j sans vérif).
+Actions : bloquer / débloquer / supprimer (si bloqué ou non vérifié depuis 14 jours).
+
+---
+
+## Emails (Resend)
+
+Templates HTML Leafitome (vert) pour : validation d’email, mot de passe oublié, changement de mot de passe.
+
+| Variable | Rôle |
+|---|---|
+| `RESEND_API_KEY` | Clé API Resend (vide = envoi désactivé) |
+| `EMAIL_FROM` | Expéditeur, ex. `Leafitome <hello@leafitome.prumme.dev>` |
+| `APP_URL` | Base des liens dans les mails (`/verify-email`, `/reset-password`) |
+
+La validation d’email n’est **pas** demandée à l’inscription : dialog dans l’app, fermable.
+Après **14 jours** sans vérification, un admin peut bloquer ou supprimer le compte.
+Un compte bloqué ne peut plus se connecter (message explicite au login).
+
+Tant que le DNS Resend n’est pas validé, garder `RESEND_API_KEY` vide ou utiliser le domaine de test Resend.
+
 ---
 
 ## WebSocket (todos partagées)

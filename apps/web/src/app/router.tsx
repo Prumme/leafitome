@@ -4,8 +4,11 @@ import { AppLayout } from '@/app/layout/AppLayout'
 import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage'
 import { AdminGate } from '@/features/admin/pages/AdminGate'
 import { AdminLoginPage } from '@/features/admin/pages/AdminLoginPage'
+import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
+import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage'
+import { VerifyEmailPage } from '@/features/auth/pages/VerifyEmailPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { HomeEntry } from '@/features/landing/pages/HomeEntry'
 import { ProfilePage } from '@/features/profile/pages/ProfilePage'
@@ -21,8 +24,11 @@ export function AppRouter() {
       <Route element={<GuestRoute />}>
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
       </Route>
 
+      <Route path="reset-password" element={<ResetPasswordPage />} />
+      <Route path="verify-email" element={<VerifyEmailPage />} />
       <Route path="invite/:token" element={<InvitePage />} />
 
       <Route path="admin/login" element={<AdminLoginPage />} />

@@ -5,6 +5,9 @@ export interface AuthUser {
   id: string
   email: string
   displayName: string | null
+  emailVerified: boolean
+  emailVerifiedAt: string | null
+  blocked?: boolean
   createdAt: string
 }
 
@@ -21,6 +24,7 @@ interface AuthState {
   }) => Promise<void>
   logout: () => Promise<void>
   updateDisplayName: (displayName: string | null) => Promise<void>
+  requestPasswordChange: () => Promise<void>
   clearError: () => void
 }
 
@@ -94,5 +98,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       body: JSON.stringify({ displayName }),
     })
     set({ user: data.user, error: null })
+  },
+
+  requestPasswordChange: async () => {
+    await apiFetch<{ ok: true; loggedOut: boolean }>('/auth/change-password/request', {
+      method: 'POST',
+    })
+    setToken(null)
+    set({ user: null, status: 'anonymous', error: null })
   },
 }))
