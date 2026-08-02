@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server'
+import { createNodeWebSocket } from '@hono/node-ws'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
@@ -15,8 +16,10 @@ import { messageRoutes } from './routes/messages.js'
 import { notificationRoutes } from './routes/notifications.js'
 import { shareRoutes } from './routes/share.js'
 import { todoRoutes } from './routes/todos.js'
+import { registerWsRoute } from './routes/ws.js'
 
 const app = new Hono()
+const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app })
 
 app.use(
   '*',
@@ -37,6 +40,7 @@ app.route('/badges', badgeRoutes)
 app.route('/notifications', notificationRoutes)
 app.route('/share', shareRoutes)
 app.route('/messages', messageRoutes)
+registerWsRoute(app, upgradeWebSocket)
 
 app.onError((err, c) => {
   if (err instanceof ZodError) {
@@ -61,9 +65,10 @@ async function main() {
   configurePush()
   startReminderScheduler()
 
-  serve({ fetch: app.fetch, port: env.PORT }, (info) => {
+  const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
     console.log(`API Leafitome sur http://localhost:${info.port}`)
   })
+  injectWebSocket(server)
 }
 
 main().catch((error) => {

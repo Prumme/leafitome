@@ -11,6 +11,8 @@ interface HistoryState {
   clearForTodo: (todoId: string) => Promise<void>
   getEntry: (todoId: string, date: string) => HistoryEntry | undefined
   replaceAll: (entries: HistoryEntry[]) => Promise<void>
+  applyRemoteUpsert: (entry: HistoryEntry) => void
+  applyRemoteDelete: (input: { id: string; todoId: string; date: string }) => void
 }
 
 export const useHistoryStore = create<HistoryState>((set, get) => ({
@@ -91,5 +93,34 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   replaceAll: async (entries) => {
     await historyRepository.replaceAll(entries)
     set({ entries, loaded: true })
+  },
+
+  applyRemoteUpsert: (entry) => {
+    const entries = get().entries
+    const byId = entries.findIndex((item) => item.id === entry.id)
+    if (byId >= 0) {
+      const next = [...entries]
+      next[byId] = entry
+      set({ entries: next })
+      return
+    }
+    const byKey = entries.findIndex(
+      (item) => item.todoId === entry.todoId && item.date === entry.date,
+    )
+    if (byKey >= 0) {
+      const next = [...entries]
+      next[byKey] = entry
+      set({ entries: next })
+      return
+    }
+    set({ entries: [...entries, entry] })
+  },
+
+  applyRemoteDelete: ({ id, todoId, date }) => {
+    set({
+      entries: get().entries.filter(
+        (entry) => entry.id !== id && !(entry.todoId === todoId && entry.date === date),
+      ),
+    })
   },
 }))

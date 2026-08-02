@@ -26,3 +26,10 @@ export async function getTodoOwnerId(todoId: string): Promise<string | null> {
   `
   return rows[0]?.user_id ?? null
 }
+
+export async function getMemberUserIds(todoId: string): Promise<string[]> {
+  const rows = await sql<{ user_id: string }[]>`
+    SELECT user_id FROM todo_members WHERE todo_id = ${todoId}
+  `
+  return rows.map((row) => row.user_id)
+}

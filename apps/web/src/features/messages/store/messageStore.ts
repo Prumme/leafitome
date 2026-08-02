@@ -9,6 +9,7 @@ interface MessageState {
   load: () => Promise<void>
   markAllRead: () => Promise<void>
   markRead: (ids: string[]) => Promise<void>
+  prependRemote: (message: AppMessage) => void
   reset: () => void
 }
 
@@ -55,6 +56,15 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     set({
       messages,
       unreadCount: messages.filter((message) => !message.readAt).length,
+    })
+  },
+
+  prependRemote: (message) => {
+    if (get().messages.some((item) => item.id === message.id)) return
+    const messages = [message, ...get().messages]
+    set({
+      messages,
+      unreadCount: messages.filter((item) => !item.readAt).length,
     })
   },
 

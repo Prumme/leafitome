@@ -219,6 +219,16 @@ ufw status
 
 ---
 
+## WebSocket (todos partagées)
+
+Sync temps réel check/uncheck + messages inbox via `GET /ws?token=…` (upgrade WebSocket).
+
+- Dev : proxy Vite `ws: true` sur `/api`
+- Prod : Caddy `reverse_proxy` gère déjà le WebSocket sur `/api/*`
+- Relancer l’API après déploiement pour activer `@hono/node-ws`
+
+---
+
 ## Notifications Web Push (app fermée)
 
 Les rappels partent **depuis l’API** via Web Push + Service Worker.

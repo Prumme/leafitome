@@ -1,5 +1,6 @@
 import { sql } from '../db/client.js'
 import { createId } from './id.js'
+import { broadcastToUsers } from './realtime.js'
 
 export type AppMessageType =
   | 'SHARE_JOINED'
@@ -16,18 +17,35 @@ export async function createAppMessage(input: {
   body: string
   meta?: Record<string, unknown>
 }): Promise<void> {
+  const id = createId('msg')
+  const createdAt = new Date()
+  const meta = input.meta ?? {}
+
   await sql`
     INSERT INTO app_messages (id, user_id, type, title, body, meta, created_at)
     VALUES (
-      ${createId('msg')},
+      ${id},
       ${input.userId}::uuid,
       ${input.type},
       ${input.title},
       ${input.body},
-      ${sql.json((input.meta ?? {}) as Parameters<typeof sql.json>[0])},
-      now()
+      ${sql.json(meta as Parameters<typeof sql.json>[0])},
+      ${createdAt}
     )
   `
+
+  broadcastToUsers([input.userId], {
+    type: 'message.new',
+    message: {
+      id,
+      type: input.type,
+      title: input.title,
+      body: input.body,
+      meta,
+      readAt: null,
+      createdAt: createdAt.toISOString(),
+    },
+  })
 }
 
 export async function actorLabel(userId: string): Promise<string> {

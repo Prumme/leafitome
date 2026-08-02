@@ -9,6 +9,7 @@ import { DayCompleteOverlay } from '@/features/celebration/DayCompleteOverlay'
 import { useDayCompleteCelebration } from '@/features/celebration/useDayCompleteCelebration'
 import { useNotificationScheduler } from '@/features/notifications/hooks/useNotificationScheduler'
 import { useBootstrapData } from '@/shared/hooks/useBootstrapData'
+import { useRealtimeSync } from '@/shared/hooks/useRealtimeSync'
 import { Leaf } from 'lucide-react'
 
 export function AppLayout() {
@@ -16,6 +17,7 @@ export function AppLayout() {
   const celebrating = useDayCompleteCelebration(ready)
   useBadgeUnlockWatcher(ready)
   useNotificationScheduler(ready)
+  useRealtimeSync(ready)
 
   return (
     <PageTransitionProvider>

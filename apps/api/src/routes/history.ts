@@ -4,8 +4,9 @@ import { z } from 'zod'
 import { sql } from '../db/client.js'
 import { createId } from '../lib/id.js'
 import { actorLabel, createAppMessage } from '../lib/messages.js'
+import { broadcastToUsers } from '../lib/realtime.js'
 import { historyInputSchema, historyUpdateSchema } from '../lib/schemas.js'
-import { getMembership } from '../lib/todoAccess.js'
+import { getMemberUserIds, getMembership } from '../lib/todoAccess.js'
 import { requireAuth, type AuthVariables } from '../middleware/auth.js'
 
 type HistoryRow = {
@@ -90,32 +91,31 @@ historyRoutes.post('/', async (c) => {
   const completedByName =
     nameRows[0]?.display_name?.trim() || nameRows[0]?.email.split('@')[0] || undefined
 
-  if (todo.shared && body.status === 'DONE') {
-    const label = await actorLabel(userId)
-    const recipients = await sql<{ user_id: string }[]>`
-      SELECT user_id FROM todo_members
-      WHERE todo_id = ${body.todoId} AND user_id <> ${userId}::uuid
-    `
-    for (const recipient of recipients) {
-      await createAppMessage({
-        userId: recipient.user_id,
-        type: 'SHARE_COMPLETED',
-        title: 'Todo effectuée',
-        body: `${label} a validé « ${todo.name} ».`,
-        meta: { todoId: body.todoId, actorId: userId, date: body.date },
-      })
+  const mapped = mapEntry({
+    ...entry,
+    completed_by_name: completedByName ?? null,
+  })
+
+  if (todo.shared) {
+    const memberIds = await getMemberUserIds(body.todoId)
+    broadcastToUsers(memberIds, { type: 'history.upsert', entry: mapped }, { excludeUserId: userId })
+
+    if (body.status === 'DONE') {
+      const label = await actorLabel(userId)
+      const recipients = memberIds.filter((id) => id !== userId)
+      for (const recipientId of recipients) {
+        await createAppMessage({
+          userId: recipientId,
+          type: 'SHARE_COMPLETED',
+          title: 'Todo effectuée',
+          body: `${label} a validé « ${todo.name} ».`,
+          meta: { todoId: body.todoId, actorId: userId, date: body.date },
+        })
+      }
     }
   }
 
-  return c.json(
-    {
-      entry: mapEntry({
-        ...entry,
-        completed_by_name: completedByName ?? null,
-      }),
-    },
-    201,
-  )
+  return c.json({ entry: mapped }, 201)
 })
 
 historyRoutes.patch('/:id', async (c) => {
@@ -146,9 +146,16 @@ historyRoutes.patch('/:id', async (c) => {
   const completedByName =
     nameRows[0]?.display_name?.trim() || nameRows[0]?.email.split('@')[0] || null
 
-  return c.json({
-    entry: mapEntry({ ...entry, completed_by_name: completedByName }),
-  })
+  const mapped = mapEntry({ ...entry, completed_by_name: completedByName })
+  const todoMeta = await sql<{ shared: boolean }[]>`
+    SELECT shared FROM todos WHERE id = ${entry.todo_id} LIMIT 1
+  `
+  if (todoMeta[0]?.shared) {
+    const memberIds = await getMemberUserIds(entry.todo_id)
+    broadcastToUsers(memberIds, { type: 'history.upsert', entry: mapped }, { excludeUserId: userId })
+  }
+
+  return c.json({ entry: mapped })
 })
 
 historyRoutes.delete('/:id', async (c) => {
@@ -170,22 +177,31 @@ historyRoutes.delete('/:id', async (c) => {
   const result = await sql`DELETE FROM history_entries WHERE id = ${id}`
   if (result.count === 0) throw new HTTPException(404, { message: 'Entrée introuvable' })
 
+  const dateStr = existing[0].date.slice(0, 10)
   if (todoRows[0]?.shared) {
+    const memberIds = await getMemberUserIds(existing[0].todo_id)
+    broadcastToUsers(
+      memberIds,
+      {
+        type: 'history.delete',
+        id,
+        todoId: existing[0].todo_id,
+        date: dateStr,
+      },
+      { excludeUserId: userId },
+    )
+
     const label = await actorLabel(userId)
-    const recipients = await sql<{ user_id: string }[]>`
-      SELECT user_id FROM todo_members
-      WHERE todo_id = ${existing[0].todo_id} AND user_id <> ${userId}::uuid
-    `
-    for (const recipient of recipients) {
+    for (const recipientId of memberIds.filter((memberId) => memberId !== userId)) {
       await createAppMessage({
-        userId: recipient.user_id,
+        userId: recipientId,
         type: 'SHARE_UNCOMPLETED',
         title: 'Validation annulée',
         body: `${label} a décoché « ${todoRows[0].name} ».`,
         meta: {
           todoId: existing[0].todo_id,
           actorId: userId,
-          date: existing[0].date.slice(0, 10),
+          date: dateStr,
         },
       })
     }
