@@ -9,6 +9,16 @@ import {
 } from '@/features/admin/lib/adminApi'
 import { Badge } from '@/shared/components/Badge'
 import { Button } from '@/shared/components/Button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/components/ui/alert-dialog'
 import { SITE } from '@/shared/config/site'
 
 function formatDate(iso: string): string {
@@ -28,6 +38,7 @@ export function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<AdminUserRow | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<AdminUserRow | null>(null)
 
   async function load() {
     setLoading(true)
@@ -92,10 +103,12 @@ export function AdminDashboardPage() {
     }
   }
 
-  async function deleteUser(user: AdminUserRow) {
-    if (!window.confirm(`Supprimer définitivement ${user.email} ?`)) return
+  async function confirmDeleteUser() {
+    const user = pendingDelete
+    if (!user) return
     setBusyId(user.id)
     setError(null)
+    setPendingDelete(null)
     try {
       await adminFetch(`/users/${user.id}`, { method: 'DELETE' })
       setUsers((prev) => prev.filter((u) => u.id !== user.id))
@@ -207,7 +220,7 @@ export function AdminDashboardPage() {
                             size="sm"
                             variant="danger"
                             disabled={busyId === user.id}
-                            onClick={() => void deleteUser(user)}
+                            onClick={() => setPendingDelete(user)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             Supprimer
@@ -235,6 +248,32 @@ export function AdminDashboardPage() {
         open={Boolean(selected)}
         onClose={() => setSelected(null)}
       />
+
+      <AlertDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce compte ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est définitive. Le compte{' '}
+              <span className="font-medium text-forest-900">
+                {pendingDelete?.email}
+              </span>{' '}
+              et toutes ses données associées seront supprimés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmDeleteUser()}>
+              Supprimer définitivement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
