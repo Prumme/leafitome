@@ -100,9 +100,9 @@ export function getScheduledTodosForDate(todos: Todo[], date: Date): Todo[] {
   return todos.filter((todo) => isTodoScheduledOn(todo, date))
 }
 
-/** Todos qui comptent pour la heatmap / streak (pas les échéances). */
+/** Todos qui comptent pour la heatmap / streak (pas les échéances ni les partagées). */
 export function todosForActivity(todos: Todo[]): Todo[] {
-  return todos.filter((todo) => !isDeadlineTodo(todo))
+  return todos.filter((todo) => !isDeadlineTodo(todo) && !todo.shared)
 }
 
 export function isDeadlineOverdue(todo: Todo, reference = todayString()): boolean {

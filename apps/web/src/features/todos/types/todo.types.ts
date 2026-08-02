@@ -30,6 +30,13 @@ export interface Todo {
   enabled: boolean
   color?: string
   archived: boolean
+  /** Todo collaborative — hors streak / heatmap */
+  shared?: boolean
+  /** Présent uniquement pour le créateur quand shared */
+  shareToken?: string
+  ownerId?: string
+  membershipRole?: 'OWNER' | 'MEMBER'
+  isOwner?: boolean
 }
 
 export type CreateTodoInput = Omit<Todo, 'id' | 'createdAt' | 'updatedAt' | 'archived'> & {

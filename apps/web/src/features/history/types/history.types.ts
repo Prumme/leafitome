@@ -8,6 +8,8 @@ export interface HistoryEntry {
   date: string
   status: HistoryStatus
   createdAt: string
+  completedBy?: string
+  completedByName?: string
 }
 
 export type CreateHistoryInput = Omit<HistoryEntry, 'id' | 'createdAt'>

@@ -1,8 +1,9 @@
 import { useRef, useState, type CSSProperties, type MouseEvent } from 'react'
-import { Archive, Leaf, Pencil, Power } from 'lucide-react'
+import { Archive, Leaf, Pencil, Power, Share } from 'lucide-react'
 import type { Todo } from '@/features/todos/types/todo.types'
 import { PriorityBadge } from '@/features/todos/components/PriorityBadge'
 import { RecurrenceBadge } from '@/features/todos/components/RecurrenceBadge'
+import { shareOrCopyInvite } from '@/features/share/utils/shareLink'
 import { DAY_LABELS, formatShortDate } from '@/shared/utils/dates'
 import { Badge } from '@/shared/components/Badge'
 import { Button } from '@/shared/components/Button'
@@ -154,10 +155,26 @@ export function TodoManageCard({
                 (todo.recurrence === 'WEEKLY' || todo.recurrence === 'MONTHLY') ? (
                   <Badge tone="moss">En avance OK</Badge>
                 ) : null}
+                {todo.shared ? <Badge tone="forest">Partagée</Badge> : null}
+                {todo.membershipRole === 'MEMBER' ? (
+                  <Badge tone="neutral">Membre</Badge>
+                ) : null}
               </div>
             </div>
 
             <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
+              {todo.shared && todo.shareToken && todo.isOwner !== false ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => void shareOrCopyInvite(todo.shareToken!, todo.name)}
+                  aria-label="Partager"
+                  title="Partager"
+                  disabled={phase !== 'idle'}
+                >
+                  <Share className="h-4 w-4" />
+                </Button>
+              ) : null}
               <Button
                 size="sm"
                 variant="ghost"
@@ -167,27 +184,31 @@ export function TodoManageCard({
               >
                 <Pencil className="h-4 w-4" />
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onToggleEnabled(todo)}
-                aria-label={todo.enabled ? 'Désactiver' : 'Activer'}
-                disabled={phase !== 'idle'}
-              >
-                <Power
-                  className={cn('h-4 w-4', todo.enabled ? 'text-done-600' : 'text-bark-500')}
-                />
-              </Button>
-              {!todo.archived ? (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={(event) => void handleArchive(event)}
-                  aria-label="Archiver"
-                  disabled={phase !== 'idle'}
-                >
-                  <Archive className="h-4 w-4 text-missed-600" />
-                </Button>
+              {todo.isOwner !== false && todo.membershipRole !== 'MEMBER' ? (
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onToggleEnabled(todo)}
+                    aria-label={todo.enabled ? 'Désactiver' : 'Activer'}
+                    disabled={phase !== 'idle'}
+                  >
+                    <Power
+                      className={cn('h-4 w-4', todo.enabled ? 'text-done-600' : 'text-bark-500')}
+                    />
+                  </Button>
+                  {!todo.archived ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(event) => void handleArchive(event)}
+                      aria-label="Archiver"
+                      disabled={phase !== 'idle'}
+                    >
+                      <Archive className="h-4 w-4 text-missed-600" />
+                    </Button>
+                  ) : null}
+                </>
               ) : null}
             </div>
           </div>

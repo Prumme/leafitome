@@ -77,7 +77,7 @@ export function OccurrenceCard({
   onDidLeave,
 }: OccurrenceCardProps) {
   const { toggleDone } = useHistoryActions()
-  const { todo, date, status, early, historyId } = occurrence
+  const { todo, date, status, early, historyId, completedByName } = occurrence
   const isDone = status === 'DONE'
   const isMissed = status === 'MISSED'
   const canToggle =
@@ -309,6 +309,10 @@ export function OccurrenceCard({
               <Badge tone="neutral">
                 {early ? `Échéance ${formatShortDate(date)}` : formatShortDate(date)}
               </Badge>
+            ) : null}
+            {todo.shared ? <Badge tone="forest">Partagée</Badge> : null}
+            {visuallyDone && completedByName ? (
+              <Badge tone="moss">Fait par {completedByName}</Badge>
             ) : null}
           </div>
         </div>

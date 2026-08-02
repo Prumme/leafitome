@@ -28,7 +28,9 @@ export function LoginPage() {
     setBusy(true)
     try {
       await login(email, password)
-      navigate(from.startsWith('/app') ? from : '/app', { replace: true })
+      const dest =
+        from.startsWith('/app') || from.startsWith('/invite/') ? from : '/app'
+      navigate(dest, { replace: true })
     } catch {
       // error in store
     } finally {
@@ -88,7 +90,11 @@ export function LoginPage() {
 
         <p className="text-center text-sm text-ink-muted">
           Pas encore de compte ?{' '}
-          <Link to="/register" className="font-medium text-forest-700 hover:underline">
+          <Link
+            to="/register"
+            state={{ from }}
+            className="font-medium text-forest-700 hover:underline"
+          >
             Créer un compte
           </Link>
         </p>

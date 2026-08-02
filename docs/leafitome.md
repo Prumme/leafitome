@@ -103,6 +103,17 @@ Les occurrences du calendrier sont surtout **calculées** ; on ne stocke que les
    - `/app/dashboard` — recap / heatmap / badges / streak
    - `/app/recurrences` — gestion + export/import
    - `/app/profile` — surnom + préférences de notifications (Web Push)
+   - `/invite/:token` — rejoindre une todo partagée
+4. Cloche Messages — activité des todos partagées (rejoint / refusé / validé)
+
+### Todos partagées
+
+- Switch « Partagée » à la création / édition
+- Lien réutilisable `/invite/{shareToken}` (sans expiration tant que partagée)
+- Validation commune + pseudo de qui a coché
+- Hors streak / heatmap
+- Seul le créateur édite / modère ; les membres peuvent quitter
+- Export backup = todos owned seulement
 
 ---
 
@@ -121,6 +132,7 @@ Les occurrences du calendrier sont surtout **calculées** ; on ne stocke que les
 - [x] V1 locale (LocalStorage) puis migration V2 API + comptes
 - [x] Déployé en prod, compte créé, site accessible
 - [x] Profil + Web Push (rappels même app fermée)
+- [x] Todos partagées + inbox messages
 - [ ] Vérification email / magic link
 - [ ] Améliorations produit à venir
 

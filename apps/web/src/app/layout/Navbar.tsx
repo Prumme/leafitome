@@ -12,6 +12,8 @@ import { usePageTransition } from '@/app/transitions/PageTransitionContext'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useBadgeStore } from '@/features/badges/store/badgeStore'
 import { useHistoryStore } from '@/features/history/store/historyStore'
+import { MessageInbox } from '@/features/messages/components/MessageInbox'
+import { useMessageStore } from '@/features/messages/store/messageStore'
 import { useNotificationPrefsStore } from '@/features/notifications/store/notificationPrefsStore'
 import { useTodoStore } from '@/features/todos/store/todoStore'
 import { SITE } from '@/shared/config/site'
@@ -142,6 +144,7 @@ export function Navbar() {
       pendingToasts: [],
     })
     useNotificationPrefsStore.getState().reset()
+    useMessageStore.getState().reset()
     navigate('/')
   }
 
@@ -201,6 +204,7 @@ export function Navbar() {
                 )
               })}
             </nav>
+            <MessageInbox />
             <NavLink
               to={PROFILE_PATH}
               onClick={(event) => handleNavClick(event, PROFILE_PATH)}

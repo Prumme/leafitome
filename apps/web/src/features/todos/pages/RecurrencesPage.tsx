@@ -54,7 +54,11 @@ export function RecurrencesPage() {
 
   async function handleExport() {
     const next = { ...badges, hasTraveled: true }
-    downloadBackup(buildBackup(todos, history, next))
+    // Backup : uniquement les todos dont on est créateur (pas les joined)
+    const owned = todos.filter((todo) => todo.isOwner !== false && todo.membershipRole !== 'MEMBER')
+    const ownedIds = new Set(owned.map((todo) => todo.id))
+    const ownedHistory = history.filter((entry) => ownedIds.has(entry.todoId))
+    downloadBackup(buildBackup(owned, ownedHistory, next))
     await markTraveled()
   }
 

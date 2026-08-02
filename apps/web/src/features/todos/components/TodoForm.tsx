@@ -1,4 +1,5 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Share } from 'lucide-react'
 import type { Day } from '@/shared/types/common.types'
 import {
   PRIORITY_VALUES,
@@ -10,6 +11,10 @@ import {
   type UpdateTodoInput,
 } from '@/features/todos/types/todo.types'
 import { PRIORITY_LABELS, RECURRENCE_LABELS } from '@/features/todos/utils/recurrence'
+import { shareOrCopyInvite } from '@/features/share/utils/shareLink'
+import { useHistoryStore } from '@/features/history/store/historyStore'
+import { useTodoStore } from '@/features/todos/store/todoStore'
+import { apiFetch } from '@/shared/lib/api/client'
 import { Button } from '@/shared/components/Button'
 import { Input } from '@/shared/components/Input'
 import { Select } from '@/shared/components/Select'
@@ -23,6 +28,14 @@ interface TodoFormProps {
   onSubmit: (data: CreateTodoInput | UpdateTodoInput) => Promise<void>
   onCancel: () => void
   submitLabel?: string
+}
+
+interface MemberRow {
+  userId: string
+  role: 'OWNER' | 'MEMBER'
+  joinedAt: string
+  displayName: string | null
+  email: string
 }
 
 const priorityOptions = PRIORITY_VALUES.map((value) => ({
@@ -46,6 +59,7 @@ export function TodoForm({
   onCancel,
   submitLabel = 'Enregistrer',
 }: TodoFormProps) {
+  const isOwner = initial ? initial.isOwner !== false && initial.membershipRole !== 'MEMBER' : true
   const [name, setName] = useState(initial?.name ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
   const [recurrence, setRecurrence] = useState<Recurrence>(initial?.recurrence ?? 'DAILY')
@@ -57,23 +71,69 @@ export function TodoForm({
   const [earlyCompletable, setEarlyCompletable] = useState(initial?.earlyCompletable ?? false)
   const [priority, setPriority] = useState<Priority>(initial?.priority ?? 'MEDIUM')
   const [enabled, setEnabled] = useState(initial?.enabled ?? true)
+  const [shared, setShared] = useState(initial?.shared ?? false)
   const [color, setColor] = useState(resolveInitialColor(initial?.color))
   const [error, setError] = useState<string | null>(null)
+  const [shareHint, setShareHint] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [members, setMembers] = useState<MemberRow[]>([])
 
   const needsDays = recurrence === 'WEEKLY'
   const needsDayOfMonth = recurrence === 'MONTHLY'
   const needsDeadline = recurrence === 'ONDAY'
   const canBeEarly = recurrence === 'WEEKLY' || recurrence === 'MONTHLY'
-
   const canSubmit = useMemo(() => name.trim().length > 0, [name])
+
+  useEffect(() => {
+    if (!initial?.id || !initial.shared || !isOwner) return
+    void apiFetch<{ members: MemberRow[] }>(`/todos/${initial.id}/members`)
+      .then((data) => setMembers(data.members))
+      .catch(() => setMembers([]))
+  }, [initial?.id, initial?.shared, isOwner])
 
   function toggleDay(day: Day) {
     setDays((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]))
   }
 
+  function handleSharedToggle(next: boolean) {
+    if (!next && initial?.shared) {
+      const ok = window.confirm(
+        'Désactiver le partage ? Les autres membres perdront immédiatement l’accès à cette todo.',
+      )
+      if (!ok) return
+    }
+    setShared(next)
+  }
+
+  async function handleShareClick() {
+    const token = initial?.shareToken
+    if (!token) {
+      setShareHint('Enregistre d’abord la todo avec le partage activé pour obtenir un lien.')
+      return
+    }
+    try {
+      const result = await shareOrCopyInvite(token, initial?.name ?? name)
+      setShareHint(result === 'shared' ? 'Invitation envoyée.' : 'Lien copié dans le presse-papiers.')
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      setShareHint('Impossible de partager le lien.')
+    }
+  }
+
+  async function removeMember(userId: string) {
+    if (!initial?.id) return
+    const ok = window.confirm('Retirer ce membre de la todo partagée ?')
+    if (!ok) return
+    await apiFetch(`/todos/${initial.id}/members/${userId}`, { method: 'DELETE' })
+    setMembers((prev) => prev.filter((member) => member.userId !== userId))
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (!isOwner) {
+      setError('Seul le créateur peut modifier cette todo.')
+      return
+    }
     if (!canSubmit) {
       setError('Le nom est obligatoire.')
       return
@@ -100,6 +160,7 @@ export function TodoForm({
       deadline: needsDeadline ? deadline : null,
       priority,
       enabled,
+      shared,
       color,
       archived: initial?.archived ?? false,
     }
@@ -112,6 +173,35 @@ export function TodoForm({
       return
     }
     setSaving(false)
+  }
+
+  if (initial && !isOwner) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-ink-muted">
+          Tu es membre de « {initial.name} ». Seul le créateur peut modifier cette todo.
+        </p>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => {
+            void (async () => {
+              await apiFetch(`/todos/${initial.id}/members/me`, { method: 'DELETE' })
+              await useTodoStore.getState().load()
+              await useHistoryStore.getState().load()
+              onCancel()
+            })()
+          }}
+        >
+          Quitter cette todo
+        </Button>
+        <div className="flex justify-end">
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            Fermer
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -247,6 +337,58 @@ export function TodoForm({
           })}
         </div>
       </fieldset>
+
+      <div className="space-y-2 border-t border-forest-100 pt-3">
+        <Toggle
+          checked={shared}
+          onChange={handleSharedToggle}
+          label="Partagée"
+          id="todo-shared"
+        />
+        <p className="text-xs text-ink-muted">
+          Les membres voient et valident la même occurrence. Hors streak et heatmap.
+        </p>
+        {initial && (shared || initial.shared) ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="secondary" size="sm" onClick={() => void handleShareClick()}>
+              <Share className="h-4 w-4" />
+              Partager le lien
+            </Button>
+            {shareHint ? <span className="text-xs text-ink-muted">{shareHint}</span> : null}
+          </div>
+        ) : null}
+      </div>
+
+      {initial?.shared && members.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-forest-800">Membres</p>
+          <ul className="space-y-1.5">
+            {members.map((member) => (
+              <li
+                key={member.userId}
+                className="flex items-center justify-between gap-2 rounded-lg bg-forest-50 px-3 py-2 text-sm"
+              >
+                <span className="truncate text-forest-900">
+                  {member.displayName?.trim() || member.email}
+                  {member.role === 'OWNER' ? (
+                    <span className="ml-1 text-xs text-ink-muted">(créateur)</span>
+                  ) : null}
+                </span>
+                {member.role === 'MEMBER' ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => void removeMember(member.userId)}
+                  >
+                    Retirer
+                  </Button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="pt-1">
         <Toggle checked={enabled} onChange={setEnabled} label="Activée" id="todo-enabled" />

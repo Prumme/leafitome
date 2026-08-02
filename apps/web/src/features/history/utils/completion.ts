@@ -25,16 +25,21 @@ export interface TodoOccurrence {
   historyId?: string
   /** Affichée en avance (pas le jour planifié) */
   early?: boolean
+  completedByName?: string
 }
 
 export function resolveOccurrenceStatus(
   todoId: string,
   date: string,
   entries: HistoryEntry[],
-): { status: OccurrenceStatus; historyId?: string } {
+): { status: OccurrenceStatus; historyId?: string; completedByName?: string } {
   const entry = entries.find((item) => item.todoId === todoId && item.date === date)
   if (entry) {
-    return { status: entry.status, historyId: entry.id }
+    return {
+      status: entry.status,
+      historyId: entry.id,
+      completedByName: entry.completedByName,
+    }
   }
   if (isFutureDate(date)) return { status: 'UPCOMING' }
   if (isToday(date) || !isPastDate(date)) return { status: 'PENDING' }
@@ -51,15 +56,23 @@ export function resolveDeadlineOccurrenceStatus(
   todo: Todo,
   date: string,
   entries: HistoryEntry[],
-): { status: OccurrenceStatus; historyId?: string } {
+): { status: OccurrenceStatus; historyId?: string; completedByName?: string } {
   const dayEntry = entries.find((item) => item.todoId === todo.id && item.date === date)
   if (dayEntry) {
-    return { status: dayEntry.status, historyId: dayEntry.id }
+    return {
+      status: dayEntry.status,
+      historyId: dayEntry.id,
+      completedByName: dayEntry.completedByName,
+    }
   }
 
   const cycleDone = findDeadlineCycleDone(todo, entries)
   if (cycleDone) {
-    return { status: 'DONE', historyId: cycleDone.id }
+    return {
+      status: 'DONE',
+      historyId: cycleDone.id,
+      completedByName: cycleDone.completedByName,
+    }
   }
 
   if (!todo.deadline) {
@@ -99,6 +112,7 @@ export function getOccurrencesForRange(
         date: dateStr,
         status: resolved.status,
         historyId: resolved.historyId,
+        completedByName: resolved.completedByName,
       })
     }
   }

@@ -51,9 +51,33 @@ CREATE TABLE IF NOT EXISTS todos (
 
 ALTER TABLE todos ADD COLUMN IF NOT EXISTS deadline DATE;
 ALTER TABLE todos ADD COLUMN IF NOT EXISTS deadline_updated_at TIMESTAMPTZ;
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS shared BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS share_token TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS todos_share_token_uidx ON todos(share_token) WHERE share_token IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS todos_user_id_idx ON todos(user_id);
 CREATE INDEX IF NOT EXISTS todos_user_active_idx ON todos(user_id) WHERE archived = false;
+
+DO $$ BEGIN
+  CREATE TYPE todo_member_role AS ENUM ('OWNER', 'MEMBER');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS todo_members (
+  todo_id TEXT NOT NULL REFERENCES todos(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role todo_member_role NOT NULL DEFAULT 'MEMBER',
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (todo_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS todo_members_user_id_idx ON todo_members(user_id);
+
+-- Backfill: chaque todo existante a son propriétaire comme OWNER
+INSERT INTO todo_members (todo_id, user_id, role, joined_at)
+SELECT id, user_id, 'OWNER', created_at FROM todos
+ON CONFLICT (todo_id, user_id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS history_entries (
   id TEXT PRIMARY KEY,
@@ -61,9 +85,12 @@ CREATE TABLE IF NOT EXISTS history_entries (
   todo_id TEXT NOT NULL REFERENCES todos(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   status history_status NOT NULL,
+  completed_by UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (todo_id, date)
 );
+
+ALTER TABLE history_entries ADD COLUMN IF NOT EXISTS completed_by UUID REFERENCES users(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS history_user_date_idx ON history_entries(user_id, date);
 CREATE INDEX IF NOT EXISTS history_todo_id_idx ON history_entries(todo_id);
@@ -103,3 +130,17 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 );
 
 CREATE INDEX IF NOT EXISTS push_subscriptions_user_id_idx ON push_subscriptions(user_id);
+
+CREATE TABLE IF NOT EXISTS app_messages (
+  id TEXT PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS app_messages_user_created_idx ON app_messages(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS app_messages_user_unread_idx ON app_messages(user_id) WHERE read_at IS NULL;

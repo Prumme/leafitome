@@ -11,7 +11,9 @@ import { startReminderScheduler } from './lib/reminderJob.js'
 import { authRoutes } from './routes/auth.js'
 import { badgeRoutes } from './routes/badges.js'
 import { historyRoutes } from './routes/history.js'
+import { messageRoutes } from './routes/messages.js'
 import { notificationRoutes } from './routes/notifications.js'
+import { shareRoutes } from './routes/share.js'
 import { todoRoutes } from './routes/todos.js'
 
 const app = new Hono()
@@ -33,6 +35,8 @@ app.route('/todos', todoRoutes)
 app.route('/history', historyRoutes)
 app.route('/badges', badgeRoutes)
 app.route('/notifications', notificationRoutes)
+app.route('/share', shareRoutes)
+app.route('/messages', messageRoutes)
 
 app.onError((err, c) => {
   if (err instanceof ZodError) {

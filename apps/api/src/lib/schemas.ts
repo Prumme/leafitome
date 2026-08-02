@@ -57,6 +57,7 @@ const todoFields = {
   color: z.string().max(32).optional(),
   enabled: z.boolean().optional(),
   archived: z.boolean().optional(),
+  shared: z.boolean().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 }

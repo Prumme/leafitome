@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { Button } from '@/shared/components/Button'
@@ -11,6 +11,12 @@ export function RegisterPage() {
   const error = useAuthStore((state) => state.error)
   const clearError = useAuthStore((state) => state.clearError)
   const navigate = useNavigate()
+  const location = useLocation()
+  const from =
+    (location.state as { from?: string } | null)?.from &&
+    (location.state as { from?: string }).from !== '/register'
+      ? (location.state as { from: string }).from
+      : '/app'
 
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
@@ -27,7 +33,9 @@ export function RegisterPage() {
         password,
         displayName: displayName.trim() || undefined,
       })
-      navigate('/app', { replace: true })
+      const dest =
+        from.startsWith('/app') || from.startsWith('/invite/') ? from : '/app'
+      navigate(dest, { replace: true })
     } catch {
       // error in store
     } finally {
