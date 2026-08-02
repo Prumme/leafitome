@@ -1,7 +1,3 @@
-const LEAF_SVG = encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3a6d4c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A7.3 7.3 0 0 0 12 19c4 0 7-3 7-7-2-1-4-2-2-4zM12 2C9 2 7 4.5 7 7c0 2.5 1.5 4 3 5.5C8.5 11 7 9 7 6.5 7 3.5 9.5 1 13 1c.3 0 .7 0 1 .1C12.5 1.5 12 1.8 12 2z"/></svg>`,
-)
-
 export function emailLayout(input: {
   title: string
   preheader: string
@@ -22,6 +18,7 @@ export function emailLayout(input: {
         </p>`
       : ''
 
+  // Pas d’image data:URI (souvent bloquée → carré gris). Emoji feuille + pastille.
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -36,13 +33,20 @@ export function emailLayout(input: {
       <td align="center">
         <table role="presentation" width="100%" style="max-width:560px;background:#ffffff;border-radius:20px;border:1px solid #d7e5db;overflow:hidden;">
           <tr>
-            <td style="background:linear-gradient(135deg,#3a6d4c,#2f573e);padding:22px 28px;">
+            <td style="background:#3a6d4c;background-color:#3a6d4c;padding:22px 28px;">
               <table role="presentation" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="vertical-align:middle;padding-right:12px;">
-                    <img src="data:image/svg+xml,${LEAF_SVG}" width="28" height="28" alt=""/>
+                  <td
+                    width="36"
+                    height="36"
+                    align="center"
+                    valign="middle"
+                    bgcolor="#ffffff"
+                    style="width:36px;height:36px;background:#ffffff;border-radius:10px;font-size:18px;line-height:36px;text-align:center;"
+                  >
+                    &#127811;
                   </td>
-                  <td style="vertical-align:middle;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.02em;">
+                  <td style="vertical-align:middle;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.02em;font-family:Georgia,'Times New Roman',serif;">
                     Leafitome
                   </td>
                 </tr>

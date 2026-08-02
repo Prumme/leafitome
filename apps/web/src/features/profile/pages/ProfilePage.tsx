@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, BellOff, Lock, Save, UserRound } from 'lucide-react'
+import { Bell, BellOff, Check, Lock, Mail, Save, UserRound } from 'lucide-react'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { useNotificationPrefsStore } from '@/features/notifications/store/notificationPrefsStore'
 import {
@@ -38,6 +38,9 @@ export function ProfilePage() {
   const [nameError, setNameError] = useState<string | null>(null)
   const [passwordBusy, setPasswordBusy] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [verifyBusy, setVerifyBusy] = useState(false)
+  const [verifyMessage, setVerifyMessage] = useState<string | null>(null)
+  const [verifyError, setVerifyError] = useState<string | null>(null)
   const [permission, setPermission] = useState(getNotificationPermission())
   const [testBusy, setTestBusy] = useState(false)
   const [testMessage, setTestMessage] = useState<string | null>(null)
@@ -173,9 +176,69 @@ export function ProfilePage() {
           <h2 className="text-lg font-semibold">Compte</h2>
         </div>
 
-        <p className="text-sm text-ink-muted">
-          Connecté en tant que <span className="font-medium text-forest-800">{user.email}</span>
-        </p>
+        <div className="space-y-2">
+          <p className="flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+            <span>
+              Connecté en tant que{' '}
+              <span className="font-medium text-forest-800">{user.email}</span>
+            </span>
+            {user.emailVerified ? (
+              <span className="inline-flex items-center gap-1 rounded-md bg-done-100 px-2 py-0.5 text-xs font-medium text-done-800">
+                <Check className="h-3.5 w-3.5" aria-hidden />
+                Vérifié
+              </span>
+            ) : null}
+          </p>
+
+          {!user.emailVerified ? (
+            <div className="rounded-xl border border-forest-100 bg-forest-50/60 px-3 py-3">
+              <p className="text-sm text-forest-900">
+                Ton email n’est pas encore vérifié. Envoie-toi un lien pour planter cette feuille.
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={verifyBusy}
+                  onClick={() => {
+                    setVerifyBusy(true)
+                    setVerifyError(null)
+                    setVerifyMessage(null)
+                    void apiFetch<{ ok: true; alreadyVerified: boolean }>(
+                      '/auth/verify-email/send',
+                      { method: 'POST' },
+                    )
+                      .then(async (data) => {
+                        if (data.alreadyVerified) {
+                          await useAuthStore.getState().bootstrap()
+                          return
+                        }
+                        setVerifyMessage(
+                          'Email envoyé — regarde ta boîte (et les indésirables).',
+                        )
+                      })
+                      .catch((err) => {
+                        setVerifyError(
+                          err instanceof Error ? err.message : 'Envoi impossible',
+                        )
+                      })
+                      .finally(() => setVerifyBusy(false))
+                  }}
+                >
+                  <Mail className="h-4 w-4" />
+                  {verifyBusy ? 'Envoi…' : 'Vérifier mon email'}
+                </Button>
+              </div>
+              {verifyMessage ? (
+                <p className="mt-2 text-sm text-done-700">{verifyMessage}</p>
+              ) : null}
+              {verifyError ? (
+                <p className="mt-2 text-sm text-missed-700">{verifyError}</p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         <form
           onSubmit={(e) => void handleSaveNickname(e)}
@@ -208,9 +271,6 @@ export function ProfilePage() {
               </p>
               <p className="mt-1 text-xs text-ink-muted">
                 Un email avec un lien sécurisé te sera envoyé. Ta session sera fermée.
-              </p>
-              <p className="mt-1 text-xs text-ink-muted">
-                Email {user.emailVerified ? 'vérifié' : 'non vérifié'}
               </p>
             </div>
             <Button
