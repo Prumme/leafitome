@@ -9,6 +9,7 @@ import { sql } from './db/client.js'
 import { env } from './env.js'
 import { configurePush } from './lib/push.js'
 import { startReminderScheduler } from './lib/reminderJob.js'
+import { adminRoutes } from './routes/admin.js'
 import { authRoutes } from './routes/auth.js'
 import { badgeRoutes } from './routes/badges.js'
 import { historyRoutes } from './routes/history.js'
@@ -34,6 +35,7 @@ app.use(
 app.get('/health', (c) => c.json({ ok: true, service: 'leafitome-api' }))
 
 app.route('/auth', authRoutes)
+app.route('/admin', adminRoutes)
 app.route('/todos', todoRoutes)
 app.route('/history', historyRoutes)
 app.route('/badges', badgeRoutes)

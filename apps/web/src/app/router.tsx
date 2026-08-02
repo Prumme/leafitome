@@ -1,6 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { GuestRoute, ProtectedRoute } from '@/app/auth/AuthGuards'
 import { AppLayout } from '@/app/layout/AppLayout'
+import { AdminDashboardPage } from '@/features/admin/pages/AdminDashboardPage'
+import { AdminGate } from '@/features/admin/pages/AdminGate'
+import { AdminLoginPage } from '@/features/admin/pages/AdminLoginPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
@@ -21,6 +24,11 @@ export function AppRouter() {
       </Route>
 
       <Route path="invite/:token" element={<InvitePage />} />
+
+      <Route path="admin/login" element={<AdminLoginPage />} />
+      <Route path="admin" element={<AdminGate />}>
+        <Route index element={<AdminDashboardPage />} />
+      </Route>
 
       <Route path="app" element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>

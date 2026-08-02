@@ -219,6 +219,19 @@ ufw status
 
 ---
 
+## Admin `/admin`
+
+Dashboard de monitoring (comptes + todos, modération activer/archiver).
+
+1. Définir `ADMIN_PASSWORD` dans `.env` / `.env.production` (et compose)
+2. Ouvrir `https://leafitome.prumme.dev/admin`
+3. Mot de passe → session **2 h** (cookie httpOnly + token local)
+4. Sans `ADMIN_PASSWORD`, le login admin renvoie 503
+
+Ne pas exposer ce mot de passe ; ce n’est pas un compte utilisateur.
+
+---
+
 ## WebSocket (todos partagées)
 
 Sync temps réel check/uncheck + messages inbox via `GET /ws?token=…` (upgrade WebSocket).

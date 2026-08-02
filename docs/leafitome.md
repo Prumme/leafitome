@@ -104,6 +104,7 @@ Les occurrences du calendrier sont surtout **calculées** ; on ne stocke que les
    - `/app/recurrences` — gestion + export/import
    - `/app/profile` — surnom + préférences de notifications (Web Push)
    - `/invite/:token` — rejoindre une todo partagée
+   - `/admin` — monitoring (mot de passe `ADMIN_PASSWORD`, session 2 h)
 4. Cloche Messages — activité des todos partagées (rejoint / refusé / validé)
 
 ### Todos partagées

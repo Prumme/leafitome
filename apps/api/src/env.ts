@@ -41,4 +41,6 @@ export const env = {
   VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY ?? '',
   VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY ?? '',
   VAPID_SUBJECT: process.env.VAPID_SUBJECT ?? 'mailto:hello@leafitome.local',
+  /** Mot de passe du dashboard /admin (vide = admin désactivé) */
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ?? '',
 }

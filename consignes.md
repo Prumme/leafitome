@@ -114,6 +114,9 @@ COOKIE_SECURE=true
 VAPID_PUBLIC_KEY=...
 VAPID_PRIVATE_KEY=...
 VAPID_SUBJECT=mailto:hello@prumme.dev
+
+# Dashboard /admin
+ADMIN_PASSWORD=...mot-de-passe-admin-fort...
 ```
 
 Puis :
